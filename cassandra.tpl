@@ -13,7 +13,7 @@ mount_point=/var/lib/cassandra
 
 sudo yum -y -q update
 sudo yum -y -q install epel-release
-sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat tree redis telnet curl nmon
+sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat tree telnet curl nmon
 
 node_id=$${HOSTNAME##cassandra}
 ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)

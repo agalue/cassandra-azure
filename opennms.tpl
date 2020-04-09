@@ -9,7 +9,7 @@ ring_buffer_size="${ring_buffer_size}"
 
 sudo yum -y -q update
 sudo yum -y -q install epel-release
-sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat tree redis telnet curl nmon
+sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat tree telnet curl nmon
 
 node_id=$${HOSTNAME##cassandra}
 hostname=$(hostname)
@@ -55,7 +55,7 @@ EOF
 sudo systemctl enable snmpd
 sudo systemctl start snmpd
 
-# Install Dependencies
+# Install JDK
 
 sudo yum install -y -q java-11-openjdk-devel
 

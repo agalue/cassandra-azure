@@ -140,10 +140,10 @@ resource "azurerm_virtual_machine" "cassandra" {
   ]
 
   storage_image_reference {
-    publisher = "RedHat"
-    offer     = "RHEL"
-    sku       = "7-LVM"
-    version   = "latest"
+    publisher = var.os_image.publisher
+    offer     = var.os_image.offer
+    sku       = var.os_image.sku
+    version   = var.os_image.version
   }
 
   os_profile {

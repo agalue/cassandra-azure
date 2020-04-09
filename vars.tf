@@ -12,6 +12,27 @@ variable "username" {
   default     = "agalue"
 }
 
+# Must be consistent with the chosen Location/Region
+# Use CI images for cloud-init support
+# Alternative theoretical option would be RedHat:RHEL:7-RAW-CI:latest
+# Unlike when Ubuntu (or any image in AWS), there is no cloud-init-output.log; instead:
+# sudo grep cloud-init /var/log/messages
+variable "os_image" {
+  description = "OS Image to use for OpenNMS and Cassandra"
+    type = object({
+      publisher = string
+      offer     = string
+      sku       = string
+      version   = string
+    })
+    default = {
+      publisher = "OpenLogic"
+      offer     = "CentOS"
+      sku       = "7-CI"
+      version   = "latest"
+    }
+}
+
 variable "address_space" {
   description = "Virtual Network Address Space"
   type        = string
@@ -62,23 +83,18 @@ variable "cassandra_vm_size" {
   default     = "Standard_DS3_v2"
 }
 
-variable "replication_factor" {
-  type    = number
-  default = 2
+variable "opennms_settings" {
+  description = "OpenNMS Settings"
+    type = object({
+      replication_factor   = number
+      cache_max_entries    = number
+      ring_buffer_size     = number
+      connections_per_host = number
+    })
+    default = {
+      replication_factor   = 2
+      cache_max_entries    = 2000000
+      ring_buffer_size     = 4194304
+      connections_per_host = 24
+    }
 }
-
-variable "cache_max_entries" {
-  type    = number
-  default = 2000000
-}
-
-variable "ring_buffer_size" {
-  type    = number
-  default = 4194304
-}
-
-variable "connections_per_host" {
-  type    = number
-  default = 24
-}
-

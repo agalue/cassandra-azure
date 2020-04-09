@@ -87,10 +87,10 @@ data "template_file" "opennms" {
 
   vars = {
     cassandra_seed       = var.cassandra_ip_addresses[0]
-    replication_factor   = var.replication_factor
-    cache_max_entries    = var.cache_max_entries
-    connections_per_host = var.connections_per_host
-    ring_buffer_size     = var.ring_buffer_size
+    replication_factor   = var.opennms_settings.replication_factor
+    cache_max_entries    = var.opennms_settings.cache_max_entries
+    connections_per_host = var.opennms_settings.connections_per_host
+    ring_buffer_size     = var.opennms_settings.ring_buffer_size
   }
 }
 
@@ -107,10 +107,10 @@ resource "azurerm_virtual_machine" "opennms" {
   ]
 
   storage_image_reference {
-    publisher = "RedHat"
-    offer     = "RHEL"
-    sku       = "7-LVM"
-    version   = "latest"
+    publisher = var.os_image.publisher
+    offer     = var.os_image.offer
+    sku       = var.os_image.sku
+    version   = var.os_image.version
   }
 
   os_profile {
@@ -138,4 +138,8 @@ resource "azurerm_virtual_machine" "opennms" {
     Environment = "Test"
     Department  = "Support"
   }
+}
+
+output "opennms-public-ip" {
+  value = azurerm_public_ip.opennms.ip_address
 }
