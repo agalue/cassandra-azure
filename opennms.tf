@@ -1,3 +1,4 @@
+# Author: Alejandro Galue <agalue@opennms.org>
 
 resource "azurerm_network_security_group" "opennms" {
   name                = "opennms-sg"
@@ -98,6 +99,9 @@ resource "azurerm_virtual_machine" "opennms" {
   resource_group_name = azurerm_resource_group.cassandra.name
   location            = azurerm_resource_group.cassandra.location
   vm_size             = var.opennms_vm_size
+
+  delete_os_disk_on_termination    = true
+  delete_data_disks_on_termination = true
 
   network_interface_ids = [
     azurerm_network_interface.opennms.id,

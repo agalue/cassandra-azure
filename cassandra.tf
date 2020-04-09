@@ -1,3 +1,4 @@
+# Author: Alejandro Galue <agalue@opennms.org>
 
 resource "azurerm_network_security_group" "cassandra" {
   name                = "cassandra-sg"
@@ -11,7 +12,7 @@ resource "azurerm_network_security_group" "cassandra" {
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "7000-7020"
+    destination_port_range     = "7000-7001"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -23,7 +24,7 @@ resource "azurerm_network_security_group" "cassandra" {
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "9042-9442"
+    destination_port_range     = "9042"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -35,7 +36,19 @@ resource "azurerm_network_security_group" "cassandra" {
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "9160-9560"
+    destination_port_range     = "9160"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "jmx"
+    priority                   = 103
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "7199"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -119,6 +132,9 @@ resource "azurerm_virtual_machine" "cassandra" {
   resource_group_name = azurerm_resource_group.cassandra.name
   location            = azurerm_resource_group.cassandra.location
   vm_size             = var.cassandra_vm_size
+
+  delete_os_disk_on_termination    = true
+  delete_data_disks_on_termination = true
 
   network_interface_ids = [
     azurerm_network_interface.cassandra[count.index].id,

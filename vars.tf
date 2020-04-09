@@ -1,3 +1,5 @@
+# Author: Alejandro Galue <agalue@opennms.org>
+
 variable "location" {
   description = "Azure Location/Region"
   type        = string

@@ -1,3 +1,4 @@
+# Author: Alejandro Galue <agalue@opennms.org>
 
 resource "azurerm_resource_group" "cassandra" {
   name     = "cassandra-rg"

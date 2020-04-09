@@ -7,10 +7,13 @@ cache_max_entries="${cache_max_entries}"
 connections_per_host="${connections_per_host}"
 ring_buffer_size="${ring_buffer_size}"
 
+export DEBIAN_FRONTEND=noninteractive
 sudo apt -y update
+sudo apt -y upgrade
 sudo apt -y install jq curl snmpd snmp git nmap
 
 node_id=$${HOSTNAME##cassandra}
+hostname=$(hostname)
 ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)
 
 # Kernel Tuning
@@ -86,12 +89,19 @@ deb-src https://debian.opennms.org stable main
 EOF
 wget -O - https://debian.opennms.org/OPENNMS-GPG-KEY | sudo apt-key add -
 sudo apt -y update
+debconf-set-selections <<< "postfix postfix/mailname string $hostname"
+debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
 sudo apt -y install opennms
 
 # Configuring OpenNMS
 
 opennms_etc=/etc/opennms
 jmxport=18980
+
+cd $opennms_etc
+git init .
+git add .
+git commit -m "Fresh Installation"
 
 num_of_cores=`cat /proc/cpuinfo | grep "^processor" | wc -l`
 half_of_cores=`expr $num_of_cores / 2`
@@ -245,10 +255,11 @@ sudo cqlsh -f $newts_cql $cassandra_seed
 
 # Creating Requisition
 
+requisition="Azure"
 sudo mkdir -p $opennms_etc/imports/pending/
-requisition=$opennms_etc/imports/pending/Azure.xml
-cat <<EOF | sudo tee $requisition
-<model-import xmlns="http://xmlns.opennms.org/xsd/config/model-import" date-stamp="2020-04-08T00:00:00.000Z" foreign-source="Azure">
+requisition_file=$opennms_etc/imports/pending/$requisition.xml
+cat <<EOF | sudo tee $requisition_file
+<model-import xmlns="http://xmlns.opennms.org/xsd/config/model-import" date-stamp="2020-04-08T00:00:00.000Z" foreign-source="$requisition">
   <node foreign-id="opennms-server" node-label="opennms-server">
     <interface ip-addr="$ip_address" status="1" snmp-primary="P"/>
     <interface ip-addr="127.0.0.1" status="1" snmp-primary="N">
@@ -265,8 +276,9 @@ cat <<EOF | sudo tee $requisition
 EOF
 
 sudo mkdir -p $opennms_etc/foreign-sources/pending/
-cat <<EOF | sudo tee $opennms_etc/foreign-sources/pending/Azure.xml
-<foreign-source xmlns="http://xmlns.opennms.org/xsd/config/foreign-source" name="Azure" date-stamp="2019-07-01T00:00:00.000Z">
+fs_file=$opennms_etc/foreign-sources/pending/$requisition.xml
+cat <<EOF | sudo tee $fs_file
+<foreign-source xmlns="http://xmlns.opennms.org/xsd/config/foreign-source" name="$requisition" date-stamp="2020-04-08T00:00:00.000Z">
   <scan-interval>1d</scan-interval>
   <detectors>
     <detector name="ICMP" class="org.opennms.netmgt.provision.detector.icmp.IcmpDetector"/>

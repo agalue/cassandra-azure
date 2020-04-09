@@ -40,9 +40,11 @@ This is a Test Environment to evaluate the performance of a Production Ready [Ca
   ssh -o ServerAliveInterval=10 -p 8101 admin@localhost
   ```
 
-  Use the bastion for this purpose or SSH via the Public IP of the OpenNMS server.
+  Use the bastion for this purpose or access via SSH the OpenNMS server through its Public IP.
 
-* Execute the `metrics:stress` command on each OpenNMS server. The following is an example to generate fake samples to be injected into the cluster:
+* Execute the `metrics:stress` command on each OpenNMS server. The following is an example to generate fake samples to be injected into the cluster.
+
+  For 50K:
 
   ```shell
   metrics:stress -r 60 -n 15000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300

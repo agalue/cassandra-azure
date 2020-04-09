@@ -1,3 +1,5 @@
+# Author: Alejandro Galue <agalue@opennms.org>
+
 resource "azurerm_public_ip" "bastion" {
   name                = "cassandra-bastion-ip"
   location            = azurerm_resource_group.cassandra.location

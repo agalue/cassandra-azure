@@ -11,7 +11,9 @@ jmx_passwd=/etc/cassandra/jmxremote.password
 jmx_access=/etc/cassandra/jmxremote.access
 mount_point=/var/lib/cassandra
 
+export DEBIAN_FRONTEND=noninteractive
 sudo apt -y update
+sudo apt -y upgrade
 sudo apt -y install jq curl snmpd snmp git nmap
 
 node_id=$${HOSTNAME##cassandra}
@@ -94,12 +96,18 @@ sudo mkfs.xfs -f /dev/md0
 
 sudo mv $mount_point $mount_point.bak
 sudo mkdir -p $mount_point
-sudo mount -t xfs $device $mount_point
+sudo mount -t xfs /dev/md0 $mount_point
 echo "/dev/md0 $mount_point xfs defaults,noatime 0 0" | sudo tee -a /etc/fstab
 sudo mv $mount_point.bak/* $mount_point/
 sudo rmdir $mount_point.bak
+sudo chown cassandra:cassandra $mount_point
 
 # Configure Cassandra
+
+cd /etc/cassandra
+git init .
+git add .
+git commit -m "Fresh Installation"
 
 sudo sed -r -i "/cluster_name/s/Test Cluster/$cluster_name/" $conf_file
 sudo sed -r -i "/seeds/s/127.0.0.1/$seed_name/" $conf_file
@@ -169,11 +177,7 @@ sudo sed -r -i "/PrintFLSStatistics/s/#-XX/-XX/" $jvm_file
 
 start_delay=$((60*($node_id-1)))
 if [[ $start_delay != 0 ]]; then
-  until echo -n > /dev/tcp/$ip_address/9042; do
-    echo "### Cassandra is unavailable - sleeping"
-    sleep 5
-  done
-  echo "### Waiting $start_delay seconds prior starting Cassandra..."
+  until printf "" 2>>/dev/null >>/dev/tcp/$seed_name/9042; do printf '.'; sleep 1; done
   sleep $start_delay
 fi
 
