@@ -100,8 +100,7 @@ resource "azurerm_virtual_machine" "opennms" {
   location            = azurerm_resource_group.cassandra.location
   vm_size             = var.opennms_vm_size
 
-  delete_os_disk_on_termination    = true
-  delete_data_disks_on_termination = true
+  delete_os_disk_on_termination = true
 
   network_interface_ids = [
     azurerm_network_interface.opennms.id,
