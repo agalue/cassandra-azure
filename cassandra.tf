@@ -140,9 +140,9 @@ resource "azurerm_virtual_machine" "cassandra" {
   ]
 
   storage_image_reference {
-    publisher = "OpenLogic"
-    offer     = "CentOS"
-    sku       = "7.5"
+    publisher = "RedHat"
+    offer     = "RHEL"
+    sku       = "7-LVM"
     version   = "latest"
   }
 
