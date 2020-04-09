@@ -1,6 +1,21 @@
 #!/bin/bash
 # Author: Alejandro Galue <agalue@opennms.org>
 
+init_disk () {
+  device=$1
+  (
+  echo n
+  echo p
+  echo 1
+  echo
+  echo
+  echo t
+  echo fd
+  echo p
+  echo w
+  ) | sudo fdisk $device
+}
+
 cluster_name="${cluster_name}"
 seed_name="${seed_name}"
 
@@ -17,21 +32,6 @@ sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat 
 
 node_id=$${HOSTNAME##cassandra}
 ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)
-
-init_disk () {
-  device=$1
-  (
-  echo n
-  echo p
-  echo 1
-  echo
-  echo
-  echo t
-  echo fd
-  echo p
-  echo w
-  ) | sudo fdisk $device
-}
 
 # Kernel Tuning
 
@@ -94,13 +94,14 @@ sudo yum install -y -q cassandra
 init_disk "/dev/sdc"
 init_disk "/dev/sdd"
 sudo mdadm --create /dev/md0 --level=stripe --raid-devices=2 /dev/sd[c-d]1
-sudo mdadm -E /dev/sd[b-c]1
+sudo mdadm -E /dev/sd[c-d]1
 sudo mkfs.xfs -f /dev/md0
 
 sudo mv $mount_point $mount_point.bak
 sudo mkdir -p $mount_point
-sudo mount -t xfs /dev/md0 $mount_point
 echo "/dev/md0 $mount_point xfs defaults,noatime 0 0" | sudo tee -a /etc/fstab
+sudo mount $mount_point
+
 sudo mv $mount_point.bak/* $mount_point/
 sudo rmdir $mount_point.bak
 sudo chown cassandra:cassandra $mount_point

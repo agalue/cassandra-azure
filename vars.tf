@@ -13,10 +13,12 @@ variable "username" {
 }
 
 # Must be consistent with the chosen Location/Region
-# Use CI images for cloud-init support
-# Alternative theoretical option would be RedHat:RHEL:7-RAW-CI:latest
-# Unlike when Ubuntu (or any image in AWS), there is no cloud-init-output.log; instead:
+# Use CI images for cloud-init support:
+# - OpenLogic:CentOS:7-CI:latest (slow execution of cloud-init script)
+# - RedHat:RHEL:7-RAW-CI:latest
+# Unlike when using Ubuntu, there is no cloud-init-output.log; instead:
 # sudo grep cloud-init /var/log/messages
+# Script available at /var/lib/cloud/instance/scripts/part-001
 variable "os_image" {
   description = "OS Image to use for OpenNMS and Cassandra"
     type = object({
