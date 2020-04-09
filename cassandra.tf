@@ -118,7 +118,7 @@ resource "azurerm_managed_disk" "disk2" {
 }
 
 data "template_file" "cassandra" {
-  template = file("${path.module}/cassandra.tpl")
+  template = file("cassandra.tpl")
 
   vars = {
     cluster_name = "OpenNMS"
@@ -156,7 +156,7 @@ resource "azurerm_virtual_machine" "cassandra" {
     disable_password_authentication = true
     ssh_keys {
       path     = "/home/${var.username}/.ssh/authorized_keys"
-      key_data = file("~/.ssh/id_rsa.pub")
+      key_data = file(var.public_ssh_key)
     }
   }
 

@@ -12,6 +12,12 @@ variable "username" {
   default     = "agalue"
 }
 
+variable "public_ssh_key" {
+  description = "Path to the public key to use on the target instances"
+  type        = string
+  default     = "~/.ssh/id_rsa.pub"
+}
+
 # Must be consistent with the chosen Location/Region
 # Use CI images for cloud-init support:
 # - OpenLogic:CentOS:7-CI:latest (slow execution of cloud-init script)

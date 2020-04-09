@@ -83,7 +83,7 @@ resource "azurerm_network_interface_security_group_association" "opennms" {
 }
 
 data "template_file" "opennms" {
-  template = file("${path.module}/opennms.tpl")
+  template = file("opennms.tpl")
 
   vars = {
     cassandra_seed       = var.cassandra_ip_addresses[0]
@@ -123,7 +123,7 @@ resource "azurerm_virtual_machine" "opennms" {
     disable_password_authentication = true
     ssh_keys {
       path     = "/home/${var.username}/.ssh/authorized_keys"
-      key_data = file("~/.ssh/id_rsa.pub")
+      key_data = file(var.public_ssh_key)
     }
   }
 
