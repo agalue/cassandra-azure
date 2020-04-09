@@ -3,7 +3,25 @@
 variable "location" {
   description = "Azure Location/Region"
   type        = string
-  default     = "South Central US"
+  default     = "East US"
+}
+
+variable "resource_group_create" {
+  description = "Set to true to create the resource group and the vnet"
+  type        = bool
+  default     = false
+}
+
+variable "resource_group_name" {
+  description = "Name of the resource group"
+  type        = string
+  default     = "sales-testing"
+}
+
+variable "vnet_name" {
+  description = "Name of the Virtual Network within the chosen resource group"
+  type        = string
+  default     = "sales-testing-vnet"
 }
 
 variable "username" {
@@ -27,38 +45,32 @@ variable "public_ssh_key" {
 # Script available at /var/lib/cloud/instance/scripts/part-001
 variable "os_image" {
   description = "OS Image to use for OpenNMS and Cassandra"
-    type = object({
-      publisher = string
-      offer     = string
-      sku       = string
-      version   = string
-    })
-    default = {
-      publisher = "OpenLogic"
-      offer     = "CentOS"
-      sku       = "7-CI"
-      version   = "latest"
-    }
+  type = object({
+    publisher = string
+    offer     = string
+    sku       = string
+    version   = string
+  })
+  default = {
+    publisher = "OpenLogic"
+    offer     = "CentOS"
+    sku       = "7-CI"
+    version   = "latest"
+  }
 }
 
+# Used only when resource_group_create=true
 variable "address_space" {
   description = "Virtual Network Address Space"
   type        = string
   default     = "10.0.0.0/16"
 }
 
-# Must exist within the address_space
+# Must exist within the address_space of the chosen virtual network
 variable "subnet" {
   description = "Main Subnet Range"
   type        = string
   default     = "10.0.2.0/24"
-}
-
-# Must exist within the address_space
-variable "bastion_subnet" {
-  description = "Bastion Subnet"
-  type        = string
-  default     = "10.0.0.0/27"
 }
 
 # Must exist within the main subnet range
@@ -93,16 +105,16 @@ variable "cassandra_vm_size" {
 
 variable "opennms_settings" {
   description = "OpenNMS Settings"
-    type = object({
-      replication_factor   = number
-      cache_max_entries    = number
-      ring_buffer_size     = number
-      connections_per_host = number
-    })
-    default = {
-      replication_factor   = 2
-      cache_max_entries    = 2000000
-      ring_buffer_size     = 4194304
-      connections_per_host = 24
-    }
+  type = object({
+    replication_factor   = number
+    cache_max_entries    = number
+    ring_buffer_size     = number
+    connections_per_host = number
+  })
+  default = {
+    replication_factor   = 2
+    cache_max_entries    = 2000000
+    ring_buffer_size     = 4194304
+    connections_per_host = 24
+  }
 }
