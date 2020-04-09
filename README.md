@@ -46,10 +46,16 @@ The objective is test the performance of a given Cassandra cluster, having a str
 
 * Execute the `metrics:stress` command on each OpenNMS server. The following is an example to generate fake samples to be injected into the cluster.
 
-  For 50K:
+  For 20K:
 
   ```shell
-  metrics:stress -r 60 -n 15000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
+  metrics:stress -r 60 -n 6000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
+  ```
+
+  For 40K:
+
+  ```shell
+  metrics:stress -r 60 -n 12000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
   ```
 
   For 100K:
@@ -58,7 +64,7 @@ The objective is test the performance of a given Cassandra cluster, having a str
   metrics:stress -r 60 -n 15000 -f 20 -g 5 -a 20 -s 1 -t 200 -i 300
   ```
 
-  On a side note, injecting 50K samples per second means that OpenNMS is collecting data from 15 million unique samples every 5 minutes. For 100K, 30 million.
+  Using `Standard_DS4_v2` for OpenNMS and `Standard_DS3_v2` on a 3 nodes cluster, the solution was able to handle 20K samples per second, but not 40K.
 
 * Check the OpenNMS performance graphs to understand how it behaves. Additionally, you could check the Azure Console.
 
