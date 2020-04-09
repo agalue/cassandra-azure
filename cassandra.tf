@@ -141,9 +141,9 @@ resource "azurerm_virtual_machine" "cassandra" {
   ]
 
   storage_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    publisher = "OpenLogic"
+    offer     = "CentOS"
+    sku       = "7.5"
     version   = "latest"
   }
 

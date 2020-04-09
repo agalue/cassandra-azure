@@ -7,10 +7,9 @@ cache_max_entries="${cache_max_entries}"
 connections_per_host="${connections_per_host}"
 ring_buffer_size="${ring_buffer_size}"
 
-export DEBIAN_FRONTEND=noninteractive
-sudo apt -y update
-sudo apt -y upgrade
-sudo apt -y install jq curl snmpd snmp git nmap
+sudo yum -y -q update
+sudo yum -y -q install epel-release
+sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat tree redis telnet curl nmon
 
 node_id=$${HOSTNAME##cassandra}
 hostname=$(hostname)
@@ -47,7 +46,6 @@ echo 'never' | sudo tee /sys/kernel/mm/transparent_hugepage/defrag
 snmp_cfg=/etc/snmp/snmpd.conf
 sudo cp $snmp_cfg $snmp_cfg.original
 cat <<EOF | sudo tee $snmp_cfg
-agentAddress  udp::161
 rocommunity public default
 syslocation AWS
 syscontact Account Manager
@@ -59,43 +57,49 @@ sudo systemctl start snmpd
 
 # Install Dependencies
 
-sudo apt -y install openjdk-11-jdk apt-transport-https
+sudo yum install -y -q java-11-openjdk-devel
 
 # Install Cassandra (for nodetool and cqlsh)
 
-wget -q -O - https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
-echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | sudo tee /etc/apt/sources.list.d/cassandra.list
-sudo apt -y update
-sudo apt -y install cassandra
+cat <<EOF | sudo tee /etc/yum.repos.d/cassandra.repo
+[cassandra]
+name=Apache Cassandra
+baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://www.apache.org/dist/cassandra/KEYS
+EOF
+sudo yum install -y -q cassandra
 
 # Installing PostgreSQL
 
-sudo apt -y install postgresql
-sudo sed -r -i "/^(local|host)/s/(peer|ident)/trust/g" /etc/postgresql/10/main/pg_hba.conf
-sudo systemctl enable postgresql
-sudo systemctl start postgresql
+sudo yum install -y -q https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+sudo yum install -y -q postgresql10-server
+pg_data=/var/lib/pgsql/10/data
+pg_setup=$(find /usr/pgsql-10/bin/ -name postgresql*setup)
+sudo $pg_setup initdb
+sudo sed -r -i 's/(peer|ident)/trust/g' $pg_data/pg_hba.conf
+sudo systemctl enable postgresql-10
+sudo systemctl start postgresql-10
 
 # Installing Haveged
 
-sudo apt -y install haveged
+sudo yum install -y -q haveged
 sudo systemctl enable haveged
 sudo systemctl start haveged
 
 # Installing OpenNMS
 
-cat << EOF | sudo tee /etc/apt/sources.list.d/opennms.list
-deb https://debian.opennms.org stable main
-deb-src https://debian.opennms.org stable main
-EOF
-wget -O - https://debian.opennms.org/OPENNMS-GPG-KEY | sudo apt-key add -
-sudo apt -y update
-debconf-set-selections <<< "postfix postfix/mailname string $hostname"
-debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
-sudo apt -y install opennms
+sudo yum install -y -q http://yum.opennms.org/repofiles/opennms-repo-stable-rhel7.noarch.rpm
+sudo rpm --import /etc/yum.repos.d/opennms-repo-stable-rhel7.gpg
+sudo yum install -y -q jicmp jicmp6 jrrd jrrd2 rrdtool
+sudo yum install -y -q 'perl(LWP)' 'perl(XML::Twig)'
+sudo yum install -y -q opennms-core opennms-webapp-jetty opennms-webapp-hawtio
 
 # Configuring OpenNMS
 
-opennms_etc=/etc/opennms
+opennms_home=/opt/opennms
+opennms_etc=$opennms_home/etc
 jmxport=18980
 
 cd $opennms_etc
@@ -239,8 +243,8 @@ done
 
 # Running OpenNMS install script
 
-sudo /usr/share/opennms/bin/runjava -s
-sudo /usr/share/opennms/install -dis
+sudo $opennms_home/bin/runjava -s
+sudo $opennms_home/bin/install -dis
 
 # Waiting for Cassandra
 

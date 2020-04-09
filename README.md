@@ -2,6 +2,8 @@
 
 This is a Test Environment to evaluate the performance of a Production Ready [Cassandra](http://cassandra.apache.org) Cluster against latest [OpenNMS Horizon](https://www.opennms.com/).
 
+The objective is test the performance of a given Cassandra cluster, having a stripe disk made of 2 Premium SSDs (P30 ~ 1TB) per instance for `/var/lib/cassandra`. The number of instances depends on the size of `cassandra_ip_addresses` from [vars.tf](vars.tf).
+
 # Insllation and Usage
 
 * Install the Azure CLI.

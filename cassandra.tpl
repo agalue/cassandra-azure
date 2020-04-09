@@ -4,17 +4,16 @@
 cluster_name="${cluster_name}"
 seed_name="${seed_name}"
 
-conf_file=/etc/cassandra/cassandra.yaml
-env_file=/etc/cassandra/cassandra-env.sh
-jvm_file=/etc/cassandra/jvm.options
+conf_file=/etc/cassandra/conf/cassandra.yaml
+env_file=/etc/cassandra/conf/cassandra-env.sh
+jvm_file=/etc/cassandra/conf/jvm.options
 jmx_passwd=/etc/cassandra/jmxremote.password
 jmx_access=/etc/cassandra/jmxremote.access
 mount_point=/var/lib/cassandra
 
-export DEBIAN_FRONTEND=noninteractive
-sudo apt -y update
-sudo apt -y upgrade
-sudo apt -y install jq curl snmpd snmp git nmap
+sudo yum -y -q update
+sudo yum -y -q install epel-release
+sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat tree redis telnet curl nmon
 
 node_id=$${HOSTNAME##cassandra}
 ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)
@@ -65,7 +64,6 @@ echo 'never' | sudo tee /sys/kernel/mm/transparent_hugepage/defrag
 snmp_cfg=/etc/snmp/snmpd.conf
 sudo cp $snmp_cfg $snmp_cfg.original
 cat <<EOF | sudo tee $snmp_cfg
-agentAddress  udp::161
 rocommunity public default
 syslocation AWS
 syscontact Account Manager
@@ -77,14 +75,19 @@ sudo systemctl start snmpd
 
 # Install Dependencies
 
-sudo apt -y install openjdk-8-jdk apt-transport-https
+sudo yum install -y -q java-1.8.0-openjdk-devel
 
 # Install Cassandra
 
-wget -q -O - https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
-echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | sudo tee /etc/apt/sources.list.d/cassandra.list
-sudo apt -y update
-sudo apt -y install cassandra
+cat <<EOF | sudo tee /etc/yum.repos.d/cassandra.repo
+[cassandra]
+name=Apache Cassandra
+baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://www.apache.org/dist/cassandra/KEYS
+EOF
+sudo yum install -y -q cassandra
 
 # Configure Data Directory
 
@@ -104,7 +107,7 @@ sudo chown cassandra:cassandra $mount_point
 
 # Configure Cassandra
 
-cd /etc/cassandra
+cd /etc/cassandra/conf
 git init .
 git add .
 git commit -m "Fresh Installation"

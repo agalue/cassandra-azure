@@ -16,7 +16,7 @@ resource "azurerm_subnet" "bastion" {
 }
 
 resource "azurerm_bastion_host" "bastion" {
-  name                = "cassandra-bastion-bastion"
+  name                = "cassandra-bastion"
   location            = azurerm_resource_group.cassandra.location
   resource_group_name = azurerm_resource_group.cassandra.name
 
