@@ -9,7 +9,7 @@ variable "location" {
 variable "resource_group_create" {
   description = "Set to true to create the resource group and the vnet"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "resource_group_name" {
@@ -52,9 +52,9 @@ variable "os_image" {
     version   = string
   })
   default = {
-    publisher = "OpenLogic"
-    offer     = "CentOS"
-    sku       = "7-CI"
+    publisher = "RedHat"
+    offer     = "RHEL"
+    sku       = "7-RAW-CI"
     version   = "latest"
   }
 }
@@ -88,19 +88,25 @@ variable "cassandra_ip_addresses" {
     "10.0.2.11",
     "10.0.2.12",
     "10.0.2.13",
+    "10.0.2.14",
+    "10.0.2.15",
+    "10.0.2.16",
+    "10.0.2.17",
+    "10.0.2.18",
   ]
 }
 
 variable "opennms_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
-  default     = "Standard_DS4_v2" # Memory Optimized Instance with 8 Cores, 28GB of RAM
+  default     = "Standard_DS5_v2" # Memory Optimized Instance with 16 Cores, 56GB of RAM
 }
 
+# https://docs.microsoft.com/en-us/azure/architecture/best-practices/cassandra
 variable "cassandra_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
-  default     = "Standard_DS3_v2" # Memory Optimized Instance with 4 Cores, 14 GB of RAM
+  default     = "Standard_DS13_v2" # Memory Optimized Instance with 8 Cores, 56GB of RAM
 }
 
 variable "opennms_settings" {
@@ -112,7 +118,7 @@ variable "opennms_settings" {
     connections_per_host = number
   })
   default = {
-    replication_factor   = 2
+    replication_factor   = 3
     cache_max_entries    = 2000000
     ring_buffer_size     = 4194304
     connections_per_host = 24
