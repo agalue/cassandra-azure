@@ -25,22 +25,22 @@ variable "vnet_name" {
 }
 
 variable "username" {
-  description = "Administrative user to manage VMs"
+  description = "Administrative user to manage VMs (SSH Access)"
   type        = string
   default     = "agalue"
 }
 
 variable "public_ssh_key" {
-  description = "Path to the public key to use on the target instances"
+  description = "Path to the public key to use on the target instances (SSH Access)"
   type        = string
   default     = "~/.ssh/id_rsa.pub"
 }
 
 # Must be consistent with the chosen Location/Region
 # Use CI images for cloud-init support:
-# - OpenLogic:CentOS:7-CI:latest (slow execution of cloud-init script)
+# - OpenLogic:CentOS:7-CI:latest
 # - RedHat:RHEL:7-RAW-CI:latest
-# In case cloud-init-output.log is not presend, you could use the following instead:
+# When cloud-init-output.log is not presend, use the following instead:
 # sudo grep cloud-init /var/log/messages
 # Script available at /var/lib/cloud/instance/scripts/part-001
 variable "os_image" {
@@ -99,10 +99,11 @@ variable "cassandra_ip_addresses" {
 variable "opennms_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
-  default     = "Standard_DS5_v2" # Memory Optimized Instance with 16 Cores, 56GB of RAM
+  default     = "Standard_D16s_v3" # General Purpose Instance with 16 Cores, 64GB of RAM
 }
 
 # https://docs.microsoft.com/en-us/azure/architecture/best-practices/cassandra
+# Premium Storage Required
 variable "cassandra_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
@@ -112,9 +113,9 @@ variable "cassandra_vm_size" {
 variable "opennms_settings" {
   description = "OpenNMS Settings"
   type = object({
-    replication_factor   = number
+    replication_factor   = number # Must be consistent with the cluster size
     cache_max_entries    = number
-    ring_buffer_size     = number
+    ring_buffer_size     = number # Must be a power of 2
     connections_per_host = number
   })
   default = {
