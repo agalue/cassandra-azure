@@ -9,7 +9,7 @@ variable "location" {
 variable "resource_group_create" {
   description = "Set to true to create the resource group and the vnet"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "resource_group_name" {
@@ -40,7 +40,7 @@ variable "public_ssh_key" {
 # Use CI images for cloud-init support:
 # - OpenLogic:CentOS:7-CI:latest (slow execution of cloud-init script)
 # - RedHat:RHEL:7-RAW-CI:latest
-# Unlike when using Ubuntu, there is no cloud-init-output.log; instead:
+# In case cloud-init-output.log is not presend, you could use the following instead:
 # sudo grep cloud-init /var/log/messages
 # Script available at /var/lib/cloud/instance/scripts/part-001
 variable "os_image" {
