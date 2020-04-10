@@ -117,15 +117,6 @@ resource "azurerm_managed_disk" "disk2" {
   }
 }
 
-data "template_file" "cassandra" {
-  template = file("cassandra.tpl")
-
-  vars = {
-    cluster_name = "OpenNMS"
-    seed_name    = var.cassandra_ip_addresses[0]
-  }
-}
-
 resource "azurerm_virtual_machine" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
   name                = "cassandra${count.index + 1}"
@@ -149,7 +140,6 @@ resource "azurerm_virtual_machine" "cassandra" {
   os_profile {
     computer_name  = "cassandra${count.index + 1}"
     admin_username = var.username
-    custom_data    = data.template_file.cassandra.rendered
   }
 
   os_profile_linux_config {
@@ -182,6 +172,35 @@ resource "azurerm_virtual_machine" "cassandra" {
     lun             = 2
     disk_size_gb    = azurerm_managed_disk.disk2[count.index].disk_size_gb
   }
+
+  tags = {
+    Environment = "Test"
+    Department  = "Support"
+  }
+}
+
+data "template_file" "cassandra" {
+  template = file("cassandra.tpl")
+
+  vars = {
+    cluster_name = "OpenNMS"
+    seed_name    = var.cassandra_ip_addresses[0]
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "cassandra" {
+  count                = length(var.cassandra_ip_addresses)
+  name                 = "cassandra${count.index + 1}-vmext"
+  virtual_machine_id   = azurerm_virtual_machine.cassandra[count.index].id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.0"
+
+  protected_settings = <<PROT
+    {
+      "script": "${base64encode(data.template_file.cassandra.rendered)}"
+    }
+    PROT
 
   tags = {
     Environment = "Test"

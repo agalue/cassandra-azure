@@ -306,3 +306,5 @@ until printf "" 2>>/dev/null >>/dev/tcp/$ip_address/8980; do printf '.'; sleep 1
 # Import Test Requisition
 
 $opennms_home/bin/provision.pl requisition import AWS
+
+exit 0
