@@ -9,19 +9,19 @@ variable "location" {
 variable "resource_group_create" {
   description = "Set to true to create the resource group and the vnet"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "resource_group_name" {
   description = "Name of the resource group"
   type        = string
-  default     = "cassandra-rg"
+  default     = "sales-testing"
 }
 
 variable "vnet_name" {
   description = "Name of the Virtual Network within the chosen resource group"
   type        = string
-  default     = "cassandra-vnet"
+  default     = "sales-testing-vnet"
 }
 
 variable "username" {
