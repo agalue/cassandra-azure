@@ -3,7 +3,7 @@
 resource "azurerm_network_security_group" "cassandra" {
   name                = "cassandra-sg"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
 
   security_rule {
     name                       = "intra-node"
@@ -63,7 +63,7 @@ resource "azurerm_network_interface" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
   name                = "cassandra-nic-${count.index + 1}"
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
 
   enable_accelerated_networking = true
   internal_dns_name_label       = "cassandra${count.index + 1}"
@@ -91,7 +91,7 @@ resource "azurerm_managed_disk" "disk1" {
   count                = length(var.cassandra_ip_addresses)
   name                 = "cassandra${count.index + 1}-disk1"
   location             = var.location
-  resource_group_name  = var.resource_group_name
+  resource_group_name  = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
   storage_account_type = "Premium_LRS"
   create_option        = "Empty"
   disk_size_gb         = "1023"
@@ -106,7 +106,7 @@ resource "azurerm_managed_disk" "disk2" {
   count                = length(var.cassandra_ip_addresses)
   name                 = "cassandra${count.index + 1}-disk2"
   location             = var.location
-  resource_group_name  = var.resource_group_name
+  resource_group_name  = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
   storage_account_type = "Premium_LRS"
   create_option        = "Empty"
   disk_size_gb         = "1023"
@@ -129,7 +129,7 @@ data "template_file" "cassandra" {
 resource "azurerm_virtual_machine" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
   name                = "cassandra${count.index + 1}"
-  resource_group_name = var.resource_group_name
+  resource_group_name = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
   location            = var.location
   vm_size             = var.cassandra_vm_size
 
