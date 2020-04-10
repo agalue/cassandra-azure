@@ -187,3 +187,5 @@ fi
 
 sudo systemctl enable cassandra
 sudo systemctl start cassandra
+
+exit 0

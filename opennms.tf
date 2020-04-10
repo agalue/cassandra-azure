@@ -82,18 +82,6 @@ resource "azurerm_network_interface_security_group_association" "opennms" {
   network_security_group_id = azurerm_network_security_group.opennms.id
 }
 
-data "template_file" "opennms" {
-  template = file("opennms.tpl")
-
-  vars = {
-    cassandra_seed       = var.cassandra_ip_addresses[0]
-    replication_factor   = var.opennms_settings.replication_factor
-    cache_max_entries    = var.opennms_settings.cache_max_entries
-    connections_per_host = var.opennms_settings.connections_per_host
-    ring_buffer_size     = var.opennms_settings.ring_buffer_size
-  }
-}
-
 resource "azurerm_virtual_machine" "opennms" {
   name                = "opennms"
   location            = var.location
@@ -116,7 +104,6 @@ resource "azurerm_virtual_machine" "opennms" {
   os_profile {
     computer_name  = "opennms"
     admin_username = var.username
-    custom_data    = data.template_file.opennms.rendered
   }
 
   os_profile_linux_config {
@@ -133,6 +120,37 @@ resource "azurerm_virtual_machine" "opennms" {
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
+
+  tags = {
+    Environment = "Test"
+    Department  = "Support"
+  }
+}
+
+data "template_file" "opennms" {
+  template = file("opennms.tpl")
+
+  vars = {
+    cassandra_seed       = var.cassandra_ip_addresses[0]
+    replication_factor   = var.opennms_settings.replication_factor
+    cache_max_entries    = var.opennms_settings.cache_max_entries
+    connections_per_host = var.opennms_settings.connections_per_host
+    ring_buffer_size     = var.opennms_settings.ring_buffer_size
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "opennms" {
+  name                 = "opennms-vmext"
+  virtual_machine_id   = azurerm_virtual_machine.opennms.id
+  publisher            = "Microsoft.Azure.Extensions"
+  type                 = "CustomScript"
+  type_handler_version = "2.0"
+
+  protected_settings = <<PROT
+    {
+      "script": "${base64encode(data.template_file.opennms.rendered)}"
+    }
+    PROT
 
   tags = {
     Environment = "Test"
