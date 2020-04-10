@@ -9,19 +9,19 @@ variable "location" {
 variable "resource_group_create" {
   description = "Set to true to create the resource group and the vnet"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "resource_group_name" {
   description = "Name of the resource group"
   type        = string
-  default     = "sales-testing"
+  default     = "cassandra-rg"
 }
 
 variable "vnet_name" {
   description = "Name of the Virtual Network within the chosen resource group"
   type        = string
-  default     = "sales-testing-vnet"
+  default     = "cassandra-vnet"
 }
 
 variable "username" {
@@ -37,12 +37,6 @@ variable "public_ssh_key" {
 }
 
 # Must be consistent with the chosen Location/Region
-# Use CI images for cloud-init support:
-# - OpenLogic:CentOS:7-CI:latest
-# - RedHat:RHEL:7-RAW-CI:latest
-# When cloud-init-output.log is not presend, use the following instead:
-# sudo grep cloud-init /var/log/messages
-# Script available at /var/lib/cloud/instance/scripts/part-001
 variable "os_image" {
   description = "OS Image to use for OpenNMS and Cassandra"
   type = object({
@@ -52,9 +46,9 @@ variable "os_image" {
     version   = string
   })
   default = {
-    publisher = "RedHat"
-    offer     = "RHEL"
-    sku       = "7-RAW-CI"
+    publisher = "OpenLogic"
+    offer     = "CentOS"
+    sku       = "8.0"
     version   = "latest"
   }
 }
