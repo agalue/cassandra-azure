@@ -1,5 +1,10 @@
 # Author: Alejandro Galue <agalue@opennms.org>
 
+locals {
+  resource_group = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
+  vnet           = var.resource_group_create ? azurerm_virtual_network.cassandra[0].name : var.vnet_name
+}
+
 resource "azurerm_resource_group" "cassandra" {
   count    = var.resource_group_create ? 1 : 0
   name     = var.resource_group_name
@@ -26,7 +31,7 @@ resource "azurerm_virtual_network" "cassandra" {
 
 resource "azurerm_subnet" "cassandra" {
   name                 = "cassandra-subnet"
-  resource_group_name  = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
-  virtual_network_name = var.resource_group_create ? azurerm_virtual_network.cassandra[0].name : var.vnet_name
+  resource_group_name  = local.resource_group
+  virtual_network_name = local.vnet
   address_prefix       = var.subnet
 }
