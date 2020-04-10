@@ -3,7 +3,7 @@
 resource "azurerm_network_security_group" "opennms" {
   name                = "opennms-sg"
   location            = var.location
-  resource_group_name = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
+  resource_group_name = local.resource_group
 
   security_rule {
     name                       = "ssh"
@@ -50,7 +50,7 @@ resource "azurerm_network_security_group" "opennms" {
 resource "azurerm_public_ip" "opennms" {
   name                = "opennms-ip"
   location            = var.location
-  resource_group_name = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
+  resource_group_name = local.resource_group
   allocation_method   = "Static"
   sku                 = "Standard"
 }
@@ -58,7 +58,7 @@ resource "azurerm_public_ip" "opennms" {
 resource "azurerm_network_interface" "opennms" {
   name                = "opennms-nic"
   location            = var.location
-  resource_group_name = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
+  resource_group_name = local.resource_group
 
   enable_accelerated_networking = true
   internal_dns_name_label       = "opennms"
@@ -97,7 +97,7 @@ data "template_file" "opennms" {
 resource "azurerm_virtual_machine" "opennms" {
   name                = "opennms"
   location            = var.location
-  resource_group_name = var.resource_group_create ? azurerm_resource_group.cassandra[0].name : var.resource_group_name
+  resource_group_name = local.resource_group
   vm_size             = var.opennms_vm_size
 
   delete_os_disk_on_termination = true
