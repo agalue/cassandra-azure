@@ -42,7 +42,7 @@ The objective is test the performance of a given Cassandra cluster, having a str
   ssh -o ServerAliveInterval=10 -p 8101 admin@localhost
   ```
 
-  Use the bastion for this purpose or access via SSH the OpenNMS server through its Public IP.
+  The OpenNMS Server allows SSH via its public IP.
 
 * Execute the `metrics:stress` command on each OpenNMS server. The following is an example to generate fake samples to be injected into the cluster.
 
