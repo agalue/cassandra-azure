@@ -8,7 +8,7 @@ connections_per_host="${connections_per_host}"
 ring_buffer_size="${ring_buffer_size}"
 
 sudo yum -y -q update
-sudo yum -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sudo yum -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
 if hash subscription-manager 2>/dev/nul; then
   sudo subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms" --enable "rhel-ha-for-rhel-*-server-rpms"
 fi
@@ -75,7 +75,7 @@ sudo yum install -y -q cassandra
 
 # Installing PostgreSQL
 
-sudo yum install -y -q https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+sudo yum install -y -q https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 sudo yum install -y -q postgresql10-server
 pg_data=/var/lib/pgsql/10/data
 pg_setup=$(find /usr/pgsql-10/bin/ -name postgresql*setup)
@@ -92,10 +92,10 @@ sudo systemctl start haveged
 
 # Installing OpenNMS
 
-sudo yum install -y -q http://yum.opennms.org/repofiles/opennms-repo-stable-rhel7.noarch.rpm
-sudo rpm --import /etc/yum.repos.d/opennms-repo-stable-rhel7.gpg
+sudo yum install -y -q http://yum.opennms.org/repofiles/opennms-repo-stable-rhel8.noarch.rpm
+sudo rpm --import /etc/yum.repos.d/opennms-repo-stable-rhel8.gpg
 sudo yum install -y -q jicmp jicmp6 jrrd jrrd2 rrdtool
-sudo yum install -y -q 'perl(LWP)' 'perl(XML::Twig)'
+sudo yum install -y -q --enablerepo='PowerTools' 'perl(LWP)' 'perl(XML::Twig)'
 sudo yum install -y -q opennms-core opennms-webapp-jetty opennms-webapp-hawtio
 
 # Configuring OpenNMS
