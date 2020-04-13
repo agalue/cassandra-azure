@@ -48,7 +48,7 @@ variable "os_image" {
   default = {
     publisher = "OpenLogic"
     offer     = "CentOS"
-    sku       = "8.0"
+    sku       = "8_1"
     version   = "latest"
   }
 }
