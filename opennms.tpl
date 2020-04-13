@@ -8,10 +8,7 @@ connections_per_host="${connections_per_host}"
 ring_buffer_size="${ring_buffer_size}"
 
 sudo yum -y -q update
-sudo yum -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-if hash subscription-manager 2>/dev/nul; then
-  sudo subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms" --enable "rhel-ha-for-rhel-*-server-rpms"
-fi
+sudo yum -y -q install epel-release
 sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat tree telnet curl nmon
 
 hostname=$(hostname)
