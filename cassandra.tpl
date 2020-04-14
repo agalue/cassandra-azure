@@ -29,12 +29,13 @@ mount_point=/var/lib/cassandra
 
 # Basic Packages
 
-echo "Perform a package upgrade packages..."
-yum -y -q update
+echo "Upgrade packages..."
+yum -y update
 
 if ! rpm -qa | grep -q epel-release; then
-  yum -y -q install epel-release
-  yum -y -q install jq net-snmp net-snmp-utils git dstat htop nmap-ncat tree telnet curl nmon
+  echo "Install basic packages..."
+  yum -y install epel-release
+  yum -y install jq net-snmp net-snmp-utils git dstat htop nmap-ncat tree telnet curl nmon
 else
   echo "Basic packages already installed..."
 fi
@@ -105,7 +106,7 @@ fi
 
 if ! rpm -qa | grep -q java-1.8.0-openjdk-devel; then
   echo "Install OpenJDK 8..."
-  yum -y -q install java-1.8.0-openjdk-devel
+  yum -y install java-1.8.0-openjdk-devel
 else
   echo "OpenJDK 8 already installed..."
 fi
@@ -113,6 +114,7 @@ fi
 # Install Cassandra
 
 if ! rpm -qa | grep -q cassandra; then
+  echo "Install Cassandra..."
   cat <<EOF | tee /etc/yum.repos.d/cassandra.repo
 [cassandra]
 name=Apache Cassandra
@@ -121,7 +123,7 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://www.apache.org/dist/cassandra/KEYS
 EOF
-  yum -y -q install cassandra
+  yum -y install cassandra
 else
   echo "Cassandra already installed..."
 fi
@@ -171,8 +173,8 @@ if [ ! -f "$cassandra_configured" ]; then
   sed -r -i "s|^[# ]*?commitlog_total_space_in_mb: .*|commitlog_total_space_in_mb: 2048|" $conf_file
 
   echo "Configure JMX settings..."
-  total_mem_in_mb=`free -m | awk '/:/ {print $2;exit}'`
-  mem_in_mb=`expr $total_mem_in_mb / 2`
+  total_mem_in_mb=$(free -m | awk '/:/ {print $2;exit}')
+  mem_in_mb=$(expr $total_mem_in_mb / 2)
   if [ "$mem_in_mb" -gt "30720" ]; then
     mem_in_mb="30720"
   fi
@@ -231,10 +233,12 @@ fi
 
 start_delay=$((60*($node_id-1)))
 if [[ $start_delay != 0 ]]; then
+  echo "Waiting for seed node to be ready..."
   until printf "" 2>>/dev/null >>/dev/tcp/$seed_name/9042; do printf '.'; sleep 1; done
   sleep $start_delay
 fi
 
+echo "Start Cassandra..."
 systemctl enable cassandra
 systemctl start cassandra
 
