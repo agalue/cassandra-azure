@@ -140,14 +140,11 @@ resource "azurerm_virtual_machine" "cassandra" {
   os_profile {
     computer_name  = "cassandra${count.index + 1}"
     admin_username = var.username
+    admin_password = var.password
   }
 
   os_profile_linux_config {
-    disable_password_authentication = true
-    ssh_keys {
-      path     = "/home/${var.username}/.ssh/authorized_keys"
-      key_data = file(var.public_ssh_key)
-    }
+    disable_password_authentication = false
   }
 
   storage_os_disk {

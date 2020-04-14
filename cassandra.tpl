@@ -27,14 +27,6 @@ jmx_passwd=/etc/cassandra/jmxremote.password
 jmx_access=/etc/cassandra/jmxremote.access
 mount_point=/var/lib/cassandra
 
-echo "Extract hostname and IP address..."
-node_id=$${HOSTNAME##cassandra}
-hostname=$(hostname)
-ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)
-echo "node_id=$node_id"
-echo "hostname=$hostname"
-echo "ipaddress=$ip_address"
-
 # Basic Packages
 
 echo "Perform a package upgrade packages..."
@@ -46,6 +38,16 @@ if ! rpm -qa | grep -q epel-release; then
 else
   echo "Basic packages already installed..."
 fi
+
+# Basic Information
+
+echo "Extract hostname and IP address..."
+node_id=$${HOSTNAME##cassandra}
+hostname=$(hostname)
+ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)
+echo "node_id=$node_id"
+echo "hostname=$hostname"
+echo "ipaddress=$ip_address"
 
 # Kernel Tuning
 
@@ -102,10 +104,10 @@ fi
 # Install JDK
 
 if ! rpm -qa | grep -q java-1.8.0-openjdk-devel; then
-  echo "Install OpenJDK 11..."
+  echo "Install OpenJDK 8..."
   yum -y -q install java-1.8.0-openjdk-devel
 else
-  echo "OpenJDK 11 already installed..."
+  echo "OpenJDK 8 already installed..."
 fi
 
 # Install Cassandra
@@ -126,7 +128,8 @@ fi
 
 # Configure Data Directory
 
-if [ ! -f "$mount_point" ]; then
+data_configured=$mount_point/configured
+if [ ! -f "$data_configured" ]; then
   echo "Configure Data Directory..."
 
   init_disk "/dev/sdc"
@@ -143,9 +146,11 @@ if [ ! -f "$mount_point" ]; then
   mv $mount_point.bak/* $mount_point/
   rmdir $mount_point.bak
   chown cassandra:cassandra $mount_point
+  touch $data_configured
 fi
 
 # Configure Cassandra
+
 cassandra_configured=$conf_dir/configured
 if [ ! -f "$cassandra_configured" ]; then
 

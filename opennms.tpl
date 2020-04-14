@@ -9,12 +9,6 @@ ring_buffer_size="${ring_buffer_size}"
 
 os_family="rhel8"
 
-echo "Extract hostname and IP address..."
-hostname=$(hostname)
-ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)
-echo "hostname=$hostname"
-echo "ipaddress=$ip_address"
-
 # Basic Packages
 
 echo "Perform a package upgrade packages..."
@@ -26,6 +20,14 @@ if ! rpm -qa | grep -q epel-release; then
 else
   echo "Basic packages already installed..."
 fi
+
+# Basic Information
+
+echo "Extract hostname and IP address..."
+hostname=$(hostname)
+ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)
+echo "hostname=$hostname"
+echo "ipaddress=$ip_address"
 
 # Kernel Tuning
 
