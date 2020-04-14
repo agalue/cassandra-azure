@@ -16,13 +16,26 @@ init_disk () {
   ) | fdisk $device
 }
 
+wait_for_cassandra () {
+  ip_srv=$1
+  echo "Waiting for Cassandra at $ip_srv to be ready..."
+  until nodetool -h $ip_srv -u cassandra -pw cassandra status 2>/dev/null | grep $ip_srv | grep -q "^UN";
+  do
+    printf "."
+    sleep 5
+  done
+  echo ""
+}
+
 cluster_name="${cluster_name}"
 seed_name="${seed_name}"
+replication_factor=${replication_factor}
 
 conf_dir=/etc/cassandra/conf
 conf_file=$conf_dir/cassandra.yaml
 env_file=$conf_dir/cassandra-env.sh
 jvm_file=$conf_dir/jvm.options
+newts_cql=$conf_dir/newts.cql
 jmx_passwd=/etc/cassandra/jmxremote.password
 jmx_access=/etc/cassandra/jmxremote.access
 mount_point=/var/lib/cassandra
@@ -115,7 +128,7 @@ fi
 
 if ! rpm -qa | grep -q cassandra; then
   echo "Install Cassandra..."
-  cat <<EOF | tee /etc/dnf.repos.d/cassandra.repo
+  cat <<EOF | tee /etc/yum.repos.d/cassandra.repo
 [cassandra]
 name=Apache Cassandra
 baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
@@ -124,7 +137,7 @@ repo_gpgcheck=1
 gpgkey=https://www.apache.org/dist/cassandra/KEYS
 EOF
   dnf -y update
-  dnf -y install cassandra
+  dnf -y install python2 cassandra
 else
   echo "Cassandra already installed..."
 fi
@@ -230,23 +243,105 @@ EOF
   sed -r -i "/ParallelGCThreads/s/#-XX/-XX/" $jvm_file
   sed -r -i "/PrintFLSStatistics/s/#-XX/-XX/" $jvm_file
 
+  echo "Patch Initialization Script..."
+  echo "https://issues.apache.org/jira/browse/CASSANDRA-15273"
+  cassandra_patch=/etc/cassandra/cassandra.patch
+  cat <<EOF | tee $cassandra_patch
+--- /root/cassandra	2020-04-14 16:37:52.732221580 +0000
++++ /etc/init.d/cassandra	2020-04-14 16:42:33.782017567 +0000
+@@ -69,8 +69,9 @@
+         echo -n "Starting Cassandra: "
+         [ -d \`dirname "\$pid_file"\` ] || \\
+             install -m 755 -o \$CASSANDRA_OWNR -g \$CASSANDRA_OWNR -d \`dirname \$pid_file\`
+-        su \$CASSANDRA_OWNR -c "\$CASSANDRA_PROG -p \$pid_file" > \$log_file 2>&1
++        runuser -u \$CASSANDRA_OWNR -- \$CASSANDRA_PROG -p \$pid_file > \$log_file 2>&1
+         retval=\$?
++        chown root.root \$pid_file
+         [ \$retval -eq 0 ] && touch \$lock_file
+         echo "OK"
+         ;;
+@@ -78,6 +79,7 @@
+         # Cassandra shutdown
+         echo -n "Shutdown Cassandra: "
+         su \$CASSANDRA_OWNR -c "kill \`cat \$pid_file\`"
++        runuser -u \$CASSANDRA_OWNR -- kill \`cat \$pid_file\`
+         retval=\$?
+         [ \$retval -eq 0 ] && rm -f \$lock_file
+         for t in \`seq 40\`; do
+EOF
+  patch /etc/init.d/cassandra $cassandra_patch
+
+  cat <<EOF | tee $newts_cql
+CREATE KEYSPACE newts WITH replication = {'class' : 'SimpleStrategy', 'replication_factor' : $replication_factor };
+
+CREATE TABLE newts.samples (
+  context text,
+  partition int,
+  resource text,
+  collected_at timestamp,
+  metric_name text,
+  value blob,
+  attributes map<text, text>,
+  PRIMARY KEY((context, partition, resource), collected_at, metric_name)
+) WITH compaction = {
+  'compaction_window_size': '7',
+  'compaction_window_unit': 'DAYS',
+  'expired_sstable_check_frequency_seconds': '86400',
+  'class': 'TimeWindowCompactionStrategy'
+} AND gc_grace_seconds = 604800
+  AND read_repair_chance = 0;
+
+CREATE TABLE newts.terms (
+  context text,
+  field text,
+  value text,
+  resource text,
+  PRIMARY KEY((context, field, value), resource)
+);
+
+CREATE TABLE newts.resource_attributes (
+  context text,
+  resource text,
+  attribute text,
+  value text,
+  PRIMARY KEY((context, resource), attribute)
+);
+
+CREATE TABLE newts.resource_metrics (
+  context text,
+  resource text,
+  metric_name text,
+  PRIMARY KEY((context, resource), metric_name)
+);
+EOF
+
   chown -R cassandra:cassandra $conf_dir/*
   touch $cassandra_configured
 else
   echo "Cassandra already configured..."
 fi
 
-# Start Cassandra
+# Wait for seed to be ready
 
 start_delay=$((60*($node_id-1)))
 if [[ $start_delay != 0 ]]; then
-  echo "Waiting for seed node to be ready..."
-  until printf "" 2>>/dev/null >>/dev/tcp/$seed_name/9042; do printf '.'; sleep 1; done
+  wait_for_cassandra $seed_name
   sleep $start_delay
 fi
+
+# Start Cassandra
 
 echo "Start Cassandra..."
 systemctl enable cassandra
 systemctl start cassandra
+
+# Create Newts Keyspace on first node (seed)
+
+if [[ $start_delay == 0 ]]; then
+  wait_for_cassandra $seed_name
+  sleep 10
+  echo "Creating Newts Keyspace..."
+  cqlsh -f $newts_cql $seed_name
+fi
 
 exit 0

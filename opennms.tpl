@@ -1,8 +1,18 @@
 #!/bin/bash
 # Author: Alejandro Galue <agalue@opennms.org>
 
+wait_for () {
+  ip=$1
+  port=$2
+  echo "Waiting for $ip at $port to be ready..."
+  until printf "" 2>>/dev/null >>/dev/tcp/$ip/$port;
+  do
+    sleep 5
+  done
+  echo ""
+}
+
 cassandra_seed="${cassandra_seed}"
-replication_factor=${replication_factor}
 cache_max_entries="${cache_max_entries}"
 connections_per_host="${connections_per_host}"
 ring_buffer_size="${ring_buffer_size}"
@@ -92,29 +102,6 @@ else
   echo "OpenJDK 11 already installed..."
 fi
 
-# Install Cassandra (for nodetool and cqlsh)
-
-if ! rpm -qa | grep -q cassandra; then
-  echo "Install Cassandra..."
-  cat <<EOF | tee /etc/dnf.repos.d/cassandra.repo
-[cassandra]
-name=Apache Cassandra
-baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://www.apache.org/dist/cassandra/KEYS
-EOF
-  dnf -y update
-  dnf -y install cassandra
-else
-  echo "Cassandra already installed..."
-fi
-
-if ! rpm -qa | grep -q cassandra; then
-  echo "ERROR: Cassandra is not installed, cannot continue."
-  exit 1
-fi
-
 # Installing PostgreSQL
 
 if ! rpm -qa | grep -q postgresql-server; then
@@ -147,8 +134,8 @@ fi
 
 if ! rpm -qa | grep -q opennms-core; then
   echo "Installing latest version of OpenNMS from the stable repository..."
-  dnf -y install http://dnf.opennms.org/repofiles/opennms-repo-stable-rhel8.noarch.rpm
-  rpm --import /etc/dnf.repos.d/opennms-repo-stable-rhel8.gpg
+  dnf -y install http://yum.opennms.org/repofiles/opennms-repo-stable-rhel8.noarch.rpm
+  rpm --import /etc/yum.repos.d/opennms-repo-stable-rhel8.gpg
   dnf -y install jicmp jicmp6 jrrd jrrd2 rrdtool
   dnf -y install opennms-core opennms-webapp-jetty opennms-webapp-hawtio
   dnf -y install --enablerepo='PowerTools' 'perl(LWP)' 'perl(XML::Twig)'
@@ -234,7 +221,7 @@ org.opennms.timeseries.strategy=newts
 org.opennms.newts.config.keyspace=newts
 
 # Cassandra Access
-org.opennms.newts.config.hostname=$cassandra_host
+org.opennms.newts.config.hostname=$cassandra_seed
 
 # Basic tuning based on the expected injection rate
 org.opennms.newts.config.ring_buffer_size=$ring_buffer_size
@@ -246,51 +233,6 @@ org.opennms.newts.config.cache.priming.block_ms=-1
 # For collecting data every 30 seconds from OpenNMS and Cassandra
 org.opennms.newts.query.minimum_step=30000
 org.opennms.newts.query.heartbeat=450000
-EOF
-
-  newts_cql=$opennms_etc/newts.cql
-  cat <<EOF | tee $newts_cql
-CREATE KEYSPACE newts WITH replication = {'class' : 'SimpleStrategy', 'replication_factor' : $replication_factor };
-
-CREATE TABLE newts.samples (
-  context text,
-  partition int,
-  resource text,
-  collected_at timestamp,
-  metric_name text,
-  value blob,
-  attributes map<text, text>,
-  PRIMARY KEY((context, partition, resource), collected_at, metric_name)
-) WITH compaction = {
-  'compaction_window_size': '7',
-  'compaction_window_unit': 'DAYS',
-  'expired_sstable_check_frequency_seconds': '86400',
-  'class': 'TimeWindowCompactionStrategy'
-} AND gc_grace_seconds = 604800
-  AND read_repair_chance = 0;
-
-CREATE TABLE newts.terms (
-  context text,
-  field text,
-  value text,
-  resource text,
-  PRIMARY KEY((context, field, value), resource)
-);
-
-CREATE TABLE newts.resource_attributes (
-  context text,
-  resource text,
-  attribute text,
-  value text,
-  PRIMARY KEY((context, resource), attribute)
-);
-
-CREATE TABLE newts.resource_metrics (
-  context text,
-  resource text,
-  metric_name text,
-  PRIMARY KEY((context, resource), metric_name)
-);
 EOF
 
   echo "Fix Pollerd/Collectd configuration for Cassandra..."
@@ -349,26 +291,13 @@ EOF
   $opennms_home/bin/runjava -S /usr/lib/jvm/java-11/bin/java
   $opennms_home/bin/install -dis
 
-  echo "Waiting for Cassandra seed node to be ready..."
-  until nodetool -h $cassandra_seed -u cassandra -pw cassandra status | grep $cassandra_seed | grep -q "UN";
-  do
-    sleep 10
-  done
-  echo ""
-
-  echo "Creating Newts Keyspace..."
-  cqlsh -f $newts_cql $cassandra_seed
+  wait_for $cassandra_seed 9042
 
   echo "Enabling and Starting OpenNMS..."
   systemctl enable opennms
   systemctl start opennms
 
-  echo "Waiting for OpenNMS to be ready..."
-  until printf "" 2>>/dev/null >>/dev/tcp/$ip_address/8980;
-  do
-    sleep 5
-  done
-  echo ""
+  wait_for $ip_address 8980
 
   echo "Import Test Requisition..."
   $opennms_home/bin/provision.pl requisition import $requisition

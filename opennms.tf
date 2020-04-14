@@ -121,7 +121,6 @@ data "template_file" "opennms" {
 
   vars = {
     cassandra_seed       = var.cassandra_ip_addresses[0]
-    replication_factor   = var.opennms_settings.replication_factor
     cache_max_entries    = var.opennms_settings.cache_max_entries
     connections_per_host = var.opennms_settings.connections_per_host
     ring_buffer_size     = var.opennms_settings.ring_buffer_size

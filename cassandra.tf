@@ -180,8 +180,9 @@ data "template_file" "cassandra" {
   template = file("cassandra.tpl")
 
   vars = {
-    cluster_name = "OpenNMS"
-    seed_name    = var.cassandra_ip_addresses[0]
+    cluster_name       = "OpenNMS"
+    seed_name          = var.cassandra_ip_addresses[0]
+    replication_factor = var.opennms_settings.replication_factor
   }
 }
 
