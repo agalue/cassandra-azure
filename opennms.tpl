@@ -1,27 +1,54 @@
 #!/bin/bash
 # Author: Alejandro Galue <agalue@opennms.org>
 
+wait_for () {
+  ip=$1
+  port=$2
+  echo "Waiting for $ip at $port to be ready..."
+  until printf "" 2>>/dev/null >>/dev/tcp/$ip/$port;
+  do
+    sleep 5
+  done
+  echo ""
+}
+
 cassandra_seed="${cassandra_seed}"
-replication_factor=${replication_factor}
 cache_max_entries="${cache_max_entries}"
 connections_per_host="${connections_per_host}"
 ring_buffer_size="${ring_buffer_size}"
 
-sudo yum -y -q update
-sudo yum -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-if hash subscription-manager 2>/dev/nul; then
-  sudo subscription-manager repos --enable "rhel-*-optional-rpms" --enable "rhel-*-extras-rpms" --enable "rhel-ha-for-rhel-*-server-rpms"
-fi
-sudo yum -y -q install jq net-snmp net-snmp-utils git pytz dstat htop nmap-ncat tree telnet curl nmon
+opennms_home=/opt/opennms
+opennms_etc=$opennms_home/etc
+jmxport=18980
 
+# Basic Packages
+
+echo "Upgrade packages..."
+dnf -y update
+
+if ! rpm -qa | grep -q epel-release; then
+  echo "Install basic packages..."
+  dnf -y install epel-release
+  dnf -y install jq net-snmp net-snmp-utils git dstat htop nmap-ncat tree telnet curl nmon
+else
+  echo "Basic packages already installed..."
+fi
+
+# Basic Information
+
+echo "Extract hostname and IP address..."
 hostname=$(hostname)
 ip_address=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0?api-version=2019-11-01" 2>/dev/null | jq -r .privateIpAddress)
+echo "hostname=$hostname"
+echo "ipaddress=$ip_address"
 
 # Kernel Tuning
 
-sudo sed -i 's/^\(.*swap\)/#\1/' /etc/fstab
-sysctl_app=/etc/sysctl.d/application.conf
-cat <<EOF | sudo tee $sysctl_app
+sysctl_app="/etc/sysctl.d/application.conf"
+if [ ! -f "$sysctl_app" ]; then
+  echo "Apply Kernel Tuning..."
+  sed -i 's/^\(.*swap\)/#\1/' /etc/fstab
+  cat <<EOF | tee $sysctl_app
 net.ipv4.tcp_keepalive_time=60
 net.ipv4.tcp_keepalive_probes=3
 net.ipv4.tcp_keepalive_intvl=10
@@ -39,88 +66,113 @@ vm.swappiness=1
 vm.zone_reclaim_mode=0
 vm.max_map_count=1048575
 EOF
-sudo sysctl -p $sysctl_app
-echo 'never' | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
-echo 'never' | sudo tee /sys/kernel/mm/transparent_hugepage/defrag
+  sysctl -p $sysctl_app
+  echo 'never' | tee /sys/kernel/mm/transparent_hugepage/enabled
+  echo 'never' | tee /sys/kernel/mm/transparent_hugepage/defrag
+else
+  echo "Kernel already optimized..."
+fi
 
 # Configuring Net-SNMP
 
-snmp_cfg=/etc/snmp/snmpd.conf
-sudo cp $snmp_cfg $snmp_cfg.original
-cat <<EOF | sudo tee $snmp_cfg
+snmp_configured="/etc/snmp/configured"
+if [ ! -f "$snmp_configured" ]; then
+  echo "Configuring Net-SNMP..."
+  snmp_cfg=/etc/snmp/snmpd.conf
+  cp $snmp_cfg $snmp_cfg.original
+cat <<EOF | tee $snmp_cfg
 rocommunity public default
-syslocation AWS
+syslocation Azure
 syscontact Account Manager
 dontLogTCPWrappersConnects yes
 disk /
 EOF
-sudo systemctl enable snmpd
-sudo systemctl start snmpd
+  systemctl enable snmpd
+  systemctl start snmpd
+  touch $snmp_configured
+else
+  echo "SNMP already configured..."
+fi
 
 # Install JDK
 
-sudo yum install -y -q java-11-openjdk-devel
-
-# Install Cassandra (for nodetool and cqlsh)
-
-cat <<EOF | sudo tee /etc/yum.repos.d/cassandra.repo
-[cassandra]
-name=Apache Cassandra
-baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://www.apache.org/dist/cassandra/KEYS
-EOF
-sudo yum install -y -q cassandra
+if ! rpm -qa | grep -q java-11-openjdk-devel; then
+  echo "Install OpenJDK 11..."
+  dnf -y install java-11-openjdk-devel
+else
+  echo "OpenJDK 11 already installed..."
+fi
 
 # Installing PostgreSQL
 
-sudo yum install -y -q https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-sudo yum install -y -q postgresql10-server
-pg_data=/var/lib/pgsql/10/data
-pg_setup=$(find /usr/pgsql-10/bin/ -name postgresql*setup)
-sudo $pg_setup initdb
-sudo sed -r -i 's/(peer|ident)/trust/g' $pg_data/pg_hba.conf
-sudo systemctl enable postgresql-10
-sudo systemctl start postgresql-10
+if ! rpm -qa | grep -q postgresql-server; then
+  dnf -y install postgresql-server
+  postgresql-setup initdb
+  sed -r -i 's/(peer|ident)/trust/g' /var/lib/pgsql/data/pg_hba.conf
+  systemctl enable postgresql
+  systemctl start postgresql
+else
+  echo "PostgreSQL 10 already installed..."
+fi
+
+if ! rpm -qa | grep -q postgresql; then
+  echo "ERROR: PostgreSQL is not installed, cannot continue."
+  exit 1
+fi
 
 # Installing Haveged
 
-sudo yum install -y -q haveged
-sudo systemctl enable haveged
-sudo systemctl start haveged
+if ! rpm -qa | grep -q haveged; then
+  echo "Installing Haveged..."
+  dnf -y install haveged
+  systemctl enable haveged
+  systemctl start haveged
+else
+  echo "Haveged installed..."
+fi
 
 # Installing OpenNMS
 
-sudo yum install -y -q http://yum.opennms.org/repofiles/opennms-repo-stable-rhel8.noarch.rpm
-sudo rpm --import /etc/yum.repos.d/opennms-repo-stable-rhel8.gpg
-sudo yum install -y -q jicmp jicmp6 jrrd jrrd2 rrdtool
-sudo yum install -y -q --enablerepo='PowerTools' 'perl(LWP)' 'perl(XML::Twig)'
-sudo yum install -y -q opennms-core opennms-webapp-jetty opennms-webapp-hawtio
+if ! rpm -qa | grep -q opennms-core; then
+  echo "Installing latest version of OpenNMS from the stable repository..."
+  dnf -y install http://yum.opennms.org/repofiles/opennms-repo-stable-rhel8.noarch.rpm
+  rpm --import /etc/yum.repos.d/opennms-repo-stable-rhel8.gpg
+  dnf -y install jicmp jicmp6 jrrd jrrd2 rrdtool
+  dnf -y install opennms-core opennms-webapp-jetty opennms-webapp-hawtio
+  dnf -y install --enablerepo='PowerTools' 'perl(LWP)' 'perl(XML::Twig)'
+else
+  echo "OpenNMS installed..."
+fi
+
+if ! rpm -qa | grep -q opennms-core; then
+  echo "ERROR: OpenNMS is not installed, cannot continue."
+  exit 1
+fi
 
 # Configuring OpenNMS
 
-opennms_home=/opt/opennms
-opennms_etc=$opennms_home/etc
-jmxport=18980
+if [ ! -f "$opennms_etc/configured" ]; then
+  echo "Configuring OpenNMS..."
 
-cd $opennms_etc
-git init .
-git add .
-git commit -m "Fresh Installation"
+  if [ ! -f "$opennms_etc/.git" ]; then
+    echo "Initialize GIT on $opennms_etc..."
+    cd $opennms_etc
+    git init .
+    git add .
+    git commit -m "Fresh Installation"
+  fi
 
-num_of_cores=`cat /proc/cpuinfo | grep "^processor" | wc -l`
-half_of_cores=`expr $num_of_cores / 2`
+  num_of_cores=$(cat /proc/cpuinfo | grep "^processor" | wc -l)
+  half_of_cores=$(expr $num_of_cores / 2)
 
-total_mem_in_mb=`free -m | awk '/:/ {print $2;exit}'`
-mem_in_mb=`expr $total_mem_in_mb / 2`
-if [ "$mem_in_mb" -gt "30720" ]; then
-  mem_in_mb="30720"
-fi
+  total_mem_in_mb=$(free -m | awk '/:/ {print $2;exit}')
+  mem_in_mb=$(expr $total_mem_in_mb / 2)
+  if [ "$mem_in_mb" -gt "30720" ]; then
+    mem_in_mb="30720"
+  fi
 
-# JVM Configuration with an advanced tuning for G1GC based on the chosen EC2 instance type
-
-cat <<EOF | sudo tee $opennms_etc/opennms.conf
+  echo "Configure JVM settings in opennms.conf..."
+  cat <<EOF | tee $opennms_etc/opennms.conf
 START_TIMEOUT=0
 JAVA_HEAP_SIZE=$mem_in_mb
 MAXIMUM_FILE_DESCRIPTORS=204800
@@ -155,116 +207,57 @@ ADDITIONAL_MANAGER_OPTIONS="\$ADDITIONAL_MANAGER_OPTIONS -Dopennms.poller.server
 ADDITIONAL_MANAGER_OPTIONS="\$ADDITIONAL_MANAGER_OPTIONS -Djava.rmi.server.hostname=$ip_address"
 EOF
 
-# JMX Groups
-
-cat <<EOF | sudo tee $opennms_etc/jmxremote.access
+  cat <<EOF | tee $opennms_etc/jmxremote.access
 admin readwrite
 jmx   readonly
 EOF
 
-# Newts
-
-newts_cfg=$opennms_etc/opennms.properties.d/newts.properties
-cat <<EOF | sudo tee $newts_cfg
+  echo "Configuring Newts..."
+  newts_cfg=$opennms_etc/opennms.properties.d/newts.properties
+  cat <<EOF | tee $newts_cfg
 # Basic Settings
+org.opennms.rrd.storeByGroup=true
+org.opennms.rrd.storeByForeignSource=true
 org.opennms.timeseries.strategy=newts
-org.opennms.newts.config.hostname=$cassandra_seed
 org.opennms.newts.config.keyspace=newts
-org.opennms.newts.config.port=9042
-# Production settings based required for the expected results from the metrics:stress tool
+
+# Cassandra Access
+org.opennms.newts.config.hostname=$cassandra_seed
+
+# Basic tuning based on the expected injection rate
 org.opennms.newts.config.ring_buffer_size=$ring_buffer_size
 org.opennms.newts.config.cache.max_entries=$cache_max_entries
 org.opennms.newts.config.writer_threads=$num_of_cores
 org.opennms.newts.config.cache.priming.enable=true
 org.opennms.newts.config.cache.priming.block_ms=-1
-org.opennms.newts.config.max-connections-per-host=$connections_per_host
+
 # For collecting data every 30 seconds from OpenNMS and Cassandra
 org.opennms.newts.query.minimum_step=30000
 org.opennms.newts.query.heartbeat=450000
 EOF
 
-newts_cql=$opennms_etc/newts.cql
-cat <<EOF | sudo tee $newts_cql
-CREATE KEYSPACE newts WITH replication = {'class' : 'SimpleStrategy', 'replication_factor' : $replication_factor };
+  echo "Fix Pollerd/Collectd configuration for Cassandra..."
+  sed -r -i 's/cassandra-username/cassandra/g' $opennms_etc/poller-configuration.xml
+  sed -r -i 's/cassandra-password/cassandra/g' $opennms_etc/poller-configuration.xml
+  sed -r -i 's/cassandra-username/cassandra/g' $opennms_etc/collectd-configuration.xml
+  sed -r -i 's/cassandra-password/cassandra/g' $opennms_etc/collectd-configuration.xml
 
-CREATE TABLE newts.samples (
-  context text,
-  partition int,
-  resource text,
-  collected_at timestamp,
-  metric_name text,
-  value blob,
-  attributes map<text, text>,
-  PRIMARY KEY((context, partition, resource), collected_at, metric_name)
-) WITH compaction = {
-  'compaction_window_size': '7',
-  'compaction_window_unit': 'DAYS',
-  'expired_sstable_check_frequency_seconds': '86400',
-  'class': 'TimeWindowCompactionStrategy'
-} AND gc_grace_seconds = 604800
-  AND read_repair_chance = 0;
-
-CREATE TABLE newts.terms (
-  context text,
-  field text,
-  value text,
-  resource text,
-  PRIMARY KEY((context, field, value), resource)
-);
-
-CREATE TABLE newts.resource_attributes (
-  context text,
-  resource text,
-  attribute text,
-  value text,
-  PRIMARY KEY((context, resource), attribute)
-);
-
-CREATE TABLE newts.resource_metrics (
-  context text,
-  resource text,
-  metric_name text,
-  PRIMARY KEY((context, resource), metric_name)
-);
-EOF
-
-sudo sed -r -i 's/cassandra-username/cassandra/g' $opennms_etc/poller-configuration.xml
-sudo sed -r -i 's/cassandra-password/cassandra/g' $opennms_etc/poller-configuration.xml
-sudo sed -r -i 's/cassandra-username/cassandra/g' $opennms_etc/collectd-configuration.xml
-sudo sed -r -i 's/cassandra-password/cassandra/g' $opennms_etc/collectd-configuration.xml
-
-sudo sed -r -i 's/interval="300000"/interval="30000"/g' $opennms_etc/collectd-configuration.xml 
-sudo sed -r -i 's/interval="300000" user/interval="30000" user/g' $opennms_etc/poller-configuration.xml 
-sudo sed -r -i 's/step="300"/step="30"/g' $opennms_etc/poller-configuration.xml 
-files=(`ls -l $opennms_etc/*datacollection-config.xml | awk '{print $9}'`)
-for f in "$${files[@]}"; do
-  if [ -f $f ]; then
+  echo "Configure Pollerd/Collectd for 30 second interval..."
+  sed -r -i 's/interval="300000"/interval="30000"/g' $opennms_etc/collectd-configuration.xml 
+  sed -r -i 's/interval="300000" user/interval="30000" user/g' $opennms_etc/poller-configuration.xml 
+  sed -r -i 's/step="300"/step="30"/g' $opennms_etc/poller-configuration.xml 
+  for f in $opennms_etc/*datacollection-config.xml; do
     sudo sed -r -i 's/step="300"/step="30"/g' $f
-  fi
-done
+  done
+  for f in $opennms_etc/jmx-datacollection-config.d/*.xml; do
+    sudo sed -r -i 's/step="300"/step="30"/g' $f
+  done
 
-# Running OpenNMS install script
-
-sudo $opennms_home/bin/runjava -s
-sudo $opennms_home/bin/install -dis
-
-# Waiting for Cassandra
-
-until nodetool -h $cassandra_seed -u cassandra -pw cassandra status | grep $cassandra_seed | grep -q "UN";
-do
-  sleep 10
-done
-
-# Creating Newts keyspace
-
-sudo cqlsh -f $newts_cql $cassandra_seed
-
-# Creating Requisition
-
-requisition="Azure"
-sudo mkdir -p $opennms_etc/imports/pending/
-requisition_file=$opennms_etc/imports/pending/$requisition.xml
-cat <<EOF | sudo tee $requisition_file
+  echo "Creating Requisition..."
+  requisition="Azure"
+  mkdir -p $opennms_etc/imports/pending/
+  requisition_file=$opennms_etc/imports/pending/$requisition.xml
+  cat <<EOF | tee $requisition_file
 <model-import xmlns="http://xmlns.opennms.org/xsd/config/model-import" date-stamp="2020-04-08T00:00:00.000Z" foreign-source="$requisition">
   <node foreign-id="opennms-server" node-label="opennms-server">
     <interface ip-addr="$ip_address" status="1" snmp-primary="P"/>
@@ -281,9 +274,10 @@ cat <<EOF | sudo tee $requisition_file
 </model-import>
 EOF
 
-sudo mkdir -p $opennms_etc/foreign-sources/pending/
-fs_file=$opennms_etc/foreign-sources/pending/$requisition.xml
-cat <<EOF | sudo tee $fs_file
+  echo "Creating Foreign Source Definition..."
+  mkdir -p $opennms_etc/foreign-sources/pending/
+  fs_file=$opennms_etc/foreign-sources/pending/$requisition.xml
+  cat <<EOF | tee $fs_file
 <foreign-source xmlns="http://xmlns.opennms.org/xsd/config/foreign-source" name="$requisition" date-stamp="2020-04-08T00:00:00.000Z">
   <scan-interval>1d</scan-interval>
   <detectors>
@@ -294,17 +288,23 @@ cat <<EOF | sudo tee $fs_file
 </foreign-source>
 EOF
 
-# Starting OpenNMS
+  echo "Running OpenNMS setup scripts..."
+  $opennms_home/bin/runjava -S /usr/lib/jvm/java-11/bin/java
+  $opennms_home/bin/install -dis
 
-sudo systemctl enable opennms
-sudo systemctl start opennms
+  wait_for $cassandra_seed 9042
 
-# Waiting for OpenNMS to be ready
+  echo "Enabling and Starting OpenNMS..."
+  systemctl enable opennms
+  systemctl start opennms
 
-until printf "" 2>>/dev/null >>/dev/tcp/$ip_address/8980; do printf '.'; sleep 1; done
+  wait_for $ip_address 8980
 
-# Import Test Requisition
+  echo "Import Test Requisition..."
+  $opennms_home/bin/provision.pl requisition import $requisition
+else
+  echo "OpenNMS already configured..."
+fi
 
-$opennms_home/bin/provision.pl requisition import $requisition
-
+echo "Done!"
 exit 0

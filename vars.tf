@@ -30,10 +30,10 @@ variable "username" {
   default     = "agalue"
 }
 
-variable "public_ssh_key" {
-  description = "Path to the public key to use on the target instances (SSH Access)"
+variable "password" {
+  description = "Password of the chosen user to manage VMs (SSH Access)"
   type        = string
-  default     = "~/.ssh/id_rsa.pub"
+  default     = "0p3nNM5;"
 }
 
 # Must be consistent with the chosen Location/Region
@@ -48,7 +48,7 @@ variable "os_image" {
   default = {
     publisher = "OpenLogic"
     offer     = "CentOS"
-    sku       = "8.0"
+    sku       = "8_1"
     version   = "latest"
   }
 }

@@ -61,7 +61,7 @@ resource "azurerm_network_security_group" "cassandra" {
 
 resource "azurerm_network_interface" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
-  name                = "cassandra-nic-${count.index + 1}"
+  name                = "cassandra${count.index + 1}-nic"
   location            = var.location
   resource_group_name = local.resource_group
 
@@ -87,36 +87,7 @@ resource "azurerm_network_interface_security_group_association" "cassandra" {
   network_security_group_id = azurerm_network_security_group.cassandra.id
 }
 
-resource "azurerm_managed_disk" "disk1" {
-  count                = length(var.cassandra_ip_addresses)
-  name                 = "cassandra${count.index + 1}-disk1"
-  location             = var.location
-  resource_group_name  = local.resource_group
-  storage_account_type = "Premium_LRS"
-  create_option        = "Empty"
-  disk_size_gb         = "1023"
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-  }
-}
-
-resource "azurerm_managed_disk" "disk2" {
-  count                = length(var.cassandra_ip_addresses)
-  name                 = "cassandra${count.index + 1}-disk2"
-  location             = var.location
-  resource_group_name  = local.resource_group
-  storage_account_type = "Premium_LRS"
-  create_option        = "Empty"
-  disk_size_gb         = "1023"
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-  }
-}
-
+# To facilitate data disks management, avoid using azurerm_linux_virtual_machine
 resource "azurerm_virtual_machine" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
   name                = "cassandra${count.index + 1}"
@@ -124,7 +95,8 @@ resource "azurerm_virtual_machine" "cassandra" {
   location            = var.location
   vm_size             = var.cassandra_vm_size
 
-  delete_os_disk_on_termination = true
+  delete_os_disk_on_termination    = true
+  delete_data_disks_on_termination = true
 
   network_interface_ids = [
     azurerm_network_interface.cassandra[count.index].id,
@@ -140,37 +112,31 @@ resource "azurerm_virtual_machine" "cassandra" {
   os_profile {
     computer_name  = "cassandra${count.index + 1}"
     admin_username = var.username
+    admin_password = var.password
   }
 
   os_profile_linux_config {
-    disable_password_authentication = true
-    ssh_keys {
-      path     = "/home/${var.username}/.ssh/authorized_keys"
-      key_data = file(var.public_ssh_key)
-    }
+    disable_password_authentication = false
   }
 
   storage_os_disk {
-    name              = "cassandra-os-disk-${count.index + 1}"
+    name              = "cassandra${count.index + 1}-os-disk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
   }
 
-  storage_data_disk {
-    name            = azurerm_managed_disk.disk1[count.index].name
-    managed_disk_id = azurerm_managed_disk.disk1[count.index].id
-    create_option   = "Attach"
-    lun             = 1
-    disk_size_gb    = azurerm_managed_disk.disk1[count.index].disk_size_gb
-  }
-
-  storage_data_disk {
-    name            = azurerm_managed_disk.disk2[count.index].name
-    managed_disk_id = azurerm_managed_disk.disk2[count.index].id
-    create_option   = "Attach"
-    lun             = 2
-    disk_size_gb    = azurerm_managed_disk.disk2[count.index].disk_size_gb
+  dynamic "storage_data_disk" {
+    iterator = disk
+    for_each = range(2)
+    content {
+      name                      = "cassandra${count.index + 1}-data-disk${disk.key}"
+      create_option             = "Empty"
+      managed_disk_type         = "Premium_LRS"
+      disk_size_gb              = 1023
+      write_accelerator_enabled = false
+      lun                       = disk.key
+    }
   }
 
   tags = {
@@ -183,8 +149,9 @@ data "template_file" "cassandra" {
   template = file("cassandra.tpl")
 
   vars = {
-    cluster_name = "OpenNMS"
-    seed_name    = var.cassandra_ip_addresses[0]
+    cluster_name       = "OpenNMS"
+    seed_name          = var.cassandra_ip_addresses[0]
+    replication_factor = var.opennms_settings.replication_factor
   }
 }
 
