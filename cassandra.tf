@@ -87,36 +87,6 @@ resource "azurerm_network_interface_security_group_association" "cassandra" {
   network_security_group_id = azurerm_network_security_group.cassandra.id
 }
 
-resource "azurerm_managed_disk" "disk1" {
-  count                = length(var.cassandra_ip_addresses)
-  name                 = "cassandra${count.index + 1}-disk1"
-  location             = var.location
-  resource_group_name  = local.resource_group
-  storage_account_type = "Premium_LRS"
-  create_option        = "Empty"
-  disk_size_gb         = "1023"
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-  }
-}
-
-resource "azurerm_managed_disk" "disk2" {
-  count                = length(var.cassandra_ip_addresses)
-  name                 = "cassandra${count.index + 1}-disk2"
-  location             = var.location
-  resource_group_name  = local.resource_group
-  storage_account_type = "Premium_LRS"
-  create_option        = "Empty"
-  disk_size_gb         = "1023"
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-  }
-}
-
 resource "azurerm_virtual_machine" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
   name                = "cassandra${count.index + 1}"
@@ -154,20 +124,17 @@ resource "azurerm_virtual_machine" "cassandra" {
     managed_disk_type = "Standard_LRS"
   }
 
-  storage_data_disk {
-    name            = azurerm_managed_disk.disk1[count.index].name
-    managed_disk_id = azurerm_managed_disk.disk1[count.index].id
-    create_option   = "Attach"
-    lun             = 1
-    disk_size_gb    = azurerm_managed_disk.disk1[count.index].disk_size_gb
-  }
-
-  storage_data_disk {
-    name            = azurerm_managed_disk.disk2[count.index].name
-    managed_disk_id = azurerm_managed_disk.disk2[count.index].id
-    create_option   = "Attach"
-    lun             = 2
-    disk_size_gb    = azurerm_managed_disk.disk2[count.index].disk_size_gb
+  dynamic "storage_data_disk" {
+    iterator = disk
+    for_each = range(2)
+    content {
+      name                      = "cassandra${count.index + 1}-disk${disk.key}"
+      create_option             = "Empty"
+      managed_disk_type         = "Premium_LRS"
+      disk_size_gb              = 1023
+      write_accelerator_enabled = false
+      lun                       = disk.key
+    }
   }
 
   tags = {

@@ -136,8 +136,8 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://www.apache.org/dist/cassandra/KEYS
 EOF
-  dnf -y update
-  dnf -y install python2 cassandra
+  dnf -y install python2
+  dnf -y install cassandra
 else
   echo "Cassandra already installed..."
 fi
