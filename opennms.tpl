@@ -19,6 +19,7 @@ ring_buffer_size="${ring_buffer_size}"
 
 opennms_home=/opt/opennms
 opennms_etc=$opennms_home/etc
+jmxport=18980
 
 # Basic Packages
 
