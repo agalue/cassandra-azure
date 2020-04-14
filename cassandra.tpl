@@ -133,11 +133,10 @@ if ! rpm -qa | grep -q cassandra; then
 name=Apache Cassandra
 baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
 gpgcheck=1
-repo_gpgcheck=1
 gpgkey=https://www.apache.org/dist/cassandra/KEYS
 EOF
-  dnf -y install python2
-  dnf -y install cassandra
+  rpm --import https://www.apache.org/dist/cassandra/KEYS
+  dnf -y install python2 patch cassandra
 else
   echo "Cassandra already installed..."
 fi

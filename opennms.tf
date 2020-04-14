@@ -93,7 +93,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
   provision_vm_agent  = true
 
   disable_password_authentication = false
-  allow_extension_operations = true
+  allow_extension_operations      = true
 
   network_interface_ids = [
     azurerm_network_interface.opennms.id,

@@ -61,7 +61,7 @@ resource "azurerm_network_security_group" "cassandra" {
 
 resource "azurerm_network_interface" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
-  name                = "cassandra-nic-${count.index + 1}"
+  name                = "cassandra${count.index + 1}-nic"
   location            = var.location
   resource_group_name = local.resource_group
 
@@ -87,6 +87,7 @@ resource "azurerm_network_interface_security_group_association" "cassandra" {
   network_security_group_id = azurerm_network_security_group.cassandra.id
 }
 
+# To facilitate data disks management, avoid using azurerm_linux_virtual_machine
 resource "azurerm_virtual_machine" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
   name                = "cassandra${count.index + 1}"
@@ -94,7 +95,8 @@ resource "azurerm_virtual_machine" "cassandra" {
   location            = var.location
   vm_size             = var.cassandra_vm_size
 
-  delete_os_disk_on_termination = true
+  delete_os_disk_on_termination    = true
+  delete_data_disks_on_termination = true
 
   network_interface_ids = [
     azurerm_network_interface.cassandra[count.index].id,
@@ -118,7 +120,7 @@ resource "azurerm_virtual_machine" "cassandra" {
   }
 
   storage_os_disk {
-    name              = "cassandra-os-disk-${count.index + 1}"
+    name              = "cassandra${count.index + 1}-os-disk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
@@ -128,7 +130,7 @@ resource "azurerm_virtual_machine" "cassandra" {
     iterator = disk
     for_each = range(2)
     content {
-      name                      = "cassandra${count.index + 1}-disk${disk.key}"
+      name                      = "cassandra${count.index + 1}-data-disk${disk.key}"
       create_option             = "Empty"
       managed_disk_type         = "Premium_LRS"
       disk_size_gb              = 1023
