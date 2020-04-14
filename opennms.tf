@@ -90,8 +90,10 @@ resource "azurerm_linux_virtual_machine" "opennms" {
   size                = var.opennms_vm_size
   admin_username      = var.username
   admin_password      = var.password
+  provision_vm_agent  = true
 
   disable_password_authentication = false
+  allow_extension_operations = true
 
   network_interface_ids = [
     azurerm_network_interface.opennms.id,
