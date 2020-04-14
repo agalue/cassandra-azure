@@ -7,19 +7,18 @@ cache_max_entries="${cache_max_entries}"
 connections_per_host="${connections_per_host}"
 ring_buffer_size="${ring_buffer_size}"
 
-os_family="rhel8"
 opennms_home=/opt/opennms
 opennms_etc=$opennms_home/etc
 
 # Basic Packages
 
 echo "Upgrade packages..."
-yum -y update
+dnf -y update
 
 if ! rpm -qa | grep -q epel-release; then
   echo "Install basic packages..."
-  yum -y install epel-release
-  yum -y install jq net-snmp net-snmp-utils git dstat htop nmap-ncat tree telnet curl nmon
+  dnf -y install epel-release
+  dnf -y install jq net-snmp net-snmp-utils git dstat htop nmap-ncat tree telnet curl nmon
 else
   echo "Basic packages already installed..."
 fi
@@ -88,7 +87,7 @@ fi
 
 if ! rpm -qa | grep -q java-11-openjdk-devel; then
   echo "Install OpenJDK 11..."
-  yum -y install java-11-openjdk-devel
+  dnf -y install java-11-openjdk-devel
 else
   echo "OpenJDK 11 already installed..."
 fi
@@ -97,7 +96,7 @@ fi
 
 if ! rpm -qa | grep -q cassandra; then
   echo "Install Cassandra..."
-  cat <<EOF | tee /etc/yum.repos.d/cassandra.repo
+  cat <<EOF | tee /etc/dnf.repos.d/cassandra.repo
 [cassandra]
 name=Apache Cassandra
 baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
@@ -105,42 +104,39 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://www.apache.org/dist/cassandra/KEYS
 EOF
-  yum -y install cassandra
+  dnf -y update
+  dnf -y install cassandra
 else
   echo "Cassandra already installed..."
 fi
 
+if ! rpm -qa | grep -q cassandra; then
+  echo "ERROR: Cassandra is not installed, cannot continue."
+  exit 1
+fi
+
 # Installing PostgreSQL
 
-if [ "$os_family" == "rhel7" ]; then
-  if ! rpm -qa | grep -q postgresql10-server; then
-    yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-    yum install -y postgresql10-server
-    pg_setup=$(find /usr/pgsql-10/bin/ -name postgresql*setup)
-    $pg_setup initdb
-    sed -r -i 's/(peer|ident)/trust/g' /var/lib/pgsql/10/data/pg_hba.conf
-    systemctl enable postgresql-10
-    systemctl start postgresql-10
-  else
-    echo "PostgreSQL 10 already installed..."
-  fi
+if ! rpm -qa | grep -q postgresql-server; then
+  dnf -y install postgresql-server
+  postgresql-setup initdb
+  sed -r -i 's/(peer|ident)/trust/g' /var/lib/pgsql/data/pg_hba.conf
+  systemctl enable postgresql
+  systemctl start postgresql
 else
-  if ! rpm -qa | grep -q postgresql-server; then
-    yum -y install postgresql-server
-    postgresql-setup initdb
-    sed -r -i 's/(peer|ident)/trust/g' /var/lib/pgsql/data/pg_hba.conf
-    systemctl enable postgresql
-    systemctl start postgresql
-  else
-    echo "PostgreSQL 10 already installed..."
-  fi
+  echo "PostgreSQL 10 already installed..."
+fi
+
+if ! rpm -qa | grep -q postgresql; then
+  echo "ERROR: PostgreSQL is not installed, cannot continue."
+  exit 1
 fi
 
 # Installing Haveged
 
 if ! rpm -qa | grep -q haveged; then
   echo "Installing Haveged..."
-  yum -y install haveged
+  dnf -y install haveged
   systemctl enable haveged
   systemctl start haveged
 else
@@ -151,17 +147,18 @@ fi
 
 if ! rpm -qa | grep -q opennms-core; then
   echo "Installing latest version of OpenNMS from the stable repository..."
-  yum -y install http://yum.opennms.org/repofiles/opennms-repo-stable-$os_family.noarch.rpm
-  rpm --import /etc/yum.repos.d/opennms-repo-stable-$os_family.gpg
-  yum -y install jicmp jicmp6 jrrd jrrd2 rrdtool
-  yum -y install opennms-core opennms-webapp-jetty opennms-webapp-hawtio
-  if [ "$os_family" == "rhel7" ]; then
-    yum -y install 'perl(LWP)' 'perl(XML::Twig)'
-  else
-    yum -y install --enablerepo='PowerTools' 'perl(LWP)' 'perl(XML::Twig)'
-  fi
+  dnf -y install http://dnf.opennms.org/repofiles/opennms-repo-stable-rhel8.noarch.rpm
+  rpm --import /etc/dnf.repos.d/opennms-repo-stable-rhel8.gpg
+  dnf -y install jicmp jicmp6 jrrd jrrd2 rrdtool
+  dnf -y install opennms-core opennms-webapp-jetty opennms-webapp-hawtio
+  dnf -y install --enablerepo='PowerTools' 'perl(LWP)' 'perl(XML::Twig)'
 else
   echo "OpenNMS installed..."
+fi
+
+if ! rpm -qa | grep -q opennms-core; then
+  echo "ERROR: OpenNMS is not installed, cannot continue."
+  exit 1
 fi
 
 # Configuring OpenNMS

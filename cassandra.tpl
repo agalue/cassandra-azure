@@ -30,12 +30,12 @@ mount_point=/var/lib/cassandra
 # Basic Packages
 
 echo "Upgrade packages..."
-yum -y update
+dnf -y update
 
 if ! rpm -qa | grep -q epel-release; then
   echo "Install basic packages..."
-  yum -y install epel-release
-  yum -y install jq net-snmp net-snmp-utils git dstat htop nmap-ncat tree telnet curl nmon
+  dnf -y install epel-release
+  dnf -y install jq net-snmp net-snmp-utils git dstat htop nmap-ncat tree telnet curl nmon
 else
   echo "Basic packages already installed..."
 fi
@@ -106,7 +106,7 @@ fi
 
 if ! rpm -qa | grep -q java-1.8.0-openjdk-devel; then
   echo "Install OpenJDK 8..."
-  yum -y install java-1.8.0-openjdk-devel
+  dnf -y install java-1.8.0-openjdk-devel
 else
   echo "OpenJDK 8 already installed..."
 fi
@@ -115,7 +115,7 @@ fi
 
 if ! rpm -qa | grep -q cassandra; then
   echo "Install Cassandra..."
-  cat <<EOF | tee /etc/yum.repos.d/cassandra.repo
+  cat <<EOF | tee /etc/dnf.repos.d/cassandra.repo
 [cassandra]
 name=Apache Cassandra
 baseurl=https://www.apache.org/dist/cassandra/redhat/311x/
@@ -123,9 +123,15 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://www.apache.org/dist/cassandra/KEYS
 EOF
-  yum -y install cassandra
+  dnf -y update
+  dnf -y install cassandra
 else
   echo "Cassandra already installed..."
+fi
+
+if ! rpm -qa | grep -q cassandra; then
+  echo "ERROR: Cassandra is not installed, cannot continue."
+  exit 1
 fi
 
 # Configure Data Directory
@@ -224,6 +230,7 @@ EOF
   sed -r -i "/ParallelGCThreads/s/#-XX/-XX/" $jvm_file
   sed -r -i "/PrintFLSStatistics/s/#-XX/-XX/" $jvm_file
 
+  chown -R cassandra:cassandra $conf_dir/*
   touch $cassandra_configured
 else
   echo "Cassandra already configured..."
