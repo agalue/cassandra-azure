@@ -1,0 +1,71 @@
+##############################################################################
+# Bootstrap process
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Start Cassandra Cluster in sequence
+  hosts: cassandra_servers
+  become: true
+  order: sorted
+  serial: 1
+  tasks:
+  - name: Start Cassandra Service
+    sysvinit: # Cassandra doesn't offer a systemd service definition
+      name: cassandra
+      state: started
+      enabled: yes
+  - name: Wait while node joins the cluster
+    shell: 'nodetool -u cassandra -pw cassandra status 2>/dev/null | grep {{ ansible_eth0.ipv4.address }}'
+    changed_when: False
+    register: result
+    until: result.stdout is regex("^UN.*")
+    delay: 30
+    retries: 10
+
+- name: Configure keyspace for Newts
+  hosts: cassandra1
+  tasks:
+  - name: Check if keyspace exists
+    command: 'cqlsh {{ ansible_eth0.ipv4.address }} -e "describe keyspaces"'
+    register: keyspaces
+    changed_when: False
+  - name: Create keyspace
+    register: cqlsh_out
+    command: 'cqlsh {{ ansible_eth0.ipv4.address }} -f /etc/cassandra/conf/newts.cql'
+    changed_when: '"newts" in keyspaces.stdout'
+
+- name: Start OpenNMS
+  hosts: onms_servers
+  become: true
+  tasks:
+  - name: Start OpenNMS Service
+    service:
+      name: opennms
+      state: started
+      enabled: yes
+  - name: Wait for OpenNMS WebUI to be available
+    wait_for:
+      port: 8980
+  - name: Create Requisition
+    uri:
+      url: http://127.0.0.1:8980/opennms/rest/requisitions
+      force_basic_auth: yes
+      user: admin
+      password: admin
+      method: POST
+      body: '{{ lookup("template", "templates/requisition.xml.j2") }}'
+      headers:
+        Content-Type: application/xml
+      status_code: 202
+      creates: /opt/opennms/etc/imports/Inventory.xml
+  - name: Import requisition
+    uri:
+      url: http://127.0.0.1:8980/opennms/rest/requisitions/Inventory/import
+      force_basic_auth: yes
+      user: admin
+      password: admin
+      method: PUT
+      status_code: 202
+      creates: /opt/opennms/etc/imports/Inventory.xml
+

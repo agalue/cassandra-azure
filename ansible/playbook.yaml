@@ -1,0 +1,11 @@
+##############################################################################
+# Main Playbook
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- import_playbook: playbook.common.yaml
+- import_playbook: playbook.opennms.yaml
+- import_playbook: playbook.cassandra.yaml
+- import_playbook: playbook.bootstrap.yaml
+

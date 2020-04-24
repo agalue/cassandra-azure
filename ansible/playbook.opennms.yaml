@@ -1,0 +1,77 @@
+##############################################################################
+# Install and configure OpenNMS with PostgreSQL
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Install OpenNMS with PostgreSQL
+  hosts: onms_servers
+  become: true
+  tasks:
+  - name: Install Dependencies
+    package:
+      state: latest
+      name:
+      - java-11-openjdk-devel
+      - postgresql-server
+  - name: Check if pg_hba.conf exists
+    register: pg_hba
+    stat:
+      path: /var/lib/pgsql/data/pg_hba.conf
+  - name: Initialize Database
+    when: not pg_hba.stat.exists
+    command: 'postgresql-setup initdb'
+    args:
+      creates: /var/lib/pgsql/data/pg_hba.conf
+  - name: Update pg_hba.conf
+    replace:
+      path: /var/lib/pgsql/data/pg_hba.conf
+      regexp: '(peer|ident)$'
+      replace: 'trust'
+  - name: Start PostgreSQL Service
+    service:
+      name: postgresql
+      state: started
+      enabled: yes
+  - name: Install the OpenNMS repository
+    yum:
+      state: present
+      name: 'http://yum.opennms.org/repofiles/opennms-repo-{{ opennms.repo }}-rhel{{ ansible_distribution_major_version }}.noarch.rpm'
+  - name: Install OpenNMS Packages
+    package:
+      state: present
+      name:
+      - rrdtool
+      - jrrd2
+      - opennms-core
+      - opennms-webapp-jetty
+      - opennms-webapp-hawtio
+  - name: Copy Newts Configuration
+    template:
+      src: templates/newts.properties.j2
+      dest: /opt/opennms/etc/opennms.properties.d/newts.properties
+  - name: Copy JVM Properties
+    template:
+      src: templates/opennms.conf.j2
+      dest: /opt/opennms/etc/opennms.conf
+  - name: Update Cassandra credentials for Pollerd and Collectd
+    replace:
+      path: '{{ item }}'
+      regexp: 'cassandra-(username|password)'
+      replace: 'cassandra'
+    with_items:
+      - /opt/opennms/etc/collectd-configuration.xml
+      - /opt/opennms/etc/poller-configuration.xml
+  - name: Update polling and collection interval
+    replace:
+      path: '{{ item }}'
+      regexp: 'interval="300000"'
+      replace: 'interval="30000"'
+    with_items:
+      - /opt/opennms/etc/collectd-configuration.xml
+      - /opt/opennms/etc/poller-configuration.xml
+  - name: Initialize OpenNMS Schema
+    command: '/opt/opennms/bin/install -dis'
+    args:
+      creates: /opt/opennms/etc/configured
+

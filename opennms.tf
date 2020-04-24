@@ -89,15 +89,17 @@ resource "azurerm_linux_virtual_machine" "opennms" {
   location            = var.location
   size                = var.opennms_vm_size
   admin_username      = var.username
-  admin_password      = var.password
-  provision_vm_agent  = true
 
-  disable_password_authentication = false
-  allow_extension_operations      = true
+  disable_password_authentication = true
 
   network_interface_ids = [
     azurerm_network_interface.opennms.id,
   ]
+
+  admin_ssh_key {
+    username   = var.username
+    public_key = file("./ansible/global-ssh-key.pub")
+  }
 
   source_image_reference {
     publisher = var.os_image.publisher
@@ -112,42 +114,31 @@ resource "azurerm_linux_virtual_machine" "opennms" {
     storage_account_type = "Standard_LRS"
   }
 
+  connection {
+    type        = "ssh"
+    user        = var.username
+    host        = azurerm_public_ip.opennms.ip_address
+    private_key = file("./ansible/global-ssh-key")
+  }
+
+  # Copy Ansible Playbook files
+  provisioner "file" {
+    source      = "ansible"
+    destination = "/home/${var.username}"
+  }
+
+  # Install Ansible
+  provisioner "remote-exec" {
+    inline = [
+      "sudo dnf install -q -y python3 python3-pip",
+      "sudo pip3 -qqq install ansible",
+      "cd ~/ansible",
+      "chmod 400 global-ssh-key",
+      "ansible-playbook playbook.yaml"
+    ]
+  }
   tags = {
     Environment = "Test"
     Department  = "Support"
   }
-}
-
-data "template_file" "opennms" {
-  template = file("opennms.tpl")
-
-  vars = {
-    cassandra_seed       = var.cassandra_ip_addresses[0]
-    cache_max_entries    = var.opennms_settings.cache_max_entries
-    connections_per_host = var.opennms_settings.connections_per_host
-    ring_buffer_size     = var.opennms_settings.ring_buffer_size
-  }
-}
-
-resource "azurerm_virtual_machine_extension" "opennms" {
-  name                 = "opennms-vmext"
-  virtual_machine_id   = azurerm_linux_virtual_machine.opennms.id
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.1"
-
-  protected_settings = <<PROT
-    {
-      "script": "${base64encode(data.template_file.opennms.rendered)}"
-    }
-    PROT
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-  }
-}
-
-output "opennms-public-ip" {
-  value = azurerm_public_ip.opennms.ip_address
 }

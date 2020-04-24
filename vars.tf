@@ -1,4 +1,6 @@
 # Author: Alejandro Galue <agalue@opennms.org>
+#
+# WARNING: Make sure the content is consistent with ansible/inventory/inventory.yaml
 
 variable "location" {
   description = "Azure Location/Region"
@@ -28,12 +30,6 @@ variable "username" {
   description = "Administrative user to manage VMs"
   type        = string
   default     = "agalue"
-}
-
-variable "password" {
-  description = "Password of the chosen user to manage VMs (SSH Access)"
-  type        = string
-  default     = "0p3nNM5;"
 }
 
 # Must be consistent with the chosen Location/Region
