@@ -61,27 +61,27 @@
     replace:
       path: /etc/cassandra/conf/cassandra.yaml
       regexp: '^(cluster_name:).*'
-      replace: '\1 "{{ cassandra.cluster_name }}"'
+      replace: '\1 {{ cassandra.cluster_name }}'
   - name: Set listen_address
     replace:
       path: /etc/cassandra/conf/cassandra.yaml
       regexp: '^(listen_address:).*'
-      replace: '\1 "{{ ansible_eth0.ipv4.address }}"'
+      replace: '\1 {{ ansible_eth0.ipv4.address }}'
   - name: Set rpc_address
     replace:
       path: /etc/cassandra/conf/cassandra.yaml
       regexp: '^(rpc_address:).*'
-      replace: '\1 "{{ ansible_eth0.ipv4.address }}"'
+      replace: '\1 {{ ansible_eth0.ipv4.address }}'
   - name: Set seeds
     replace:
       path: /etc/cassandra/conf/cassandra.yaml
       regexp: '^(.*seeds:).*'
-      replace: '\1 "{{ cassandra.seed }}"'
+      replace: '\1 cassandra1'
   - name: Set concurrent_compactors
     replace:
       path: /etc/cassandra/conf/cassandra.yaml
       regexp: '^.*(concurrent_compactors:).*'
-      replace: '\1 "{{ ansible_processor_cores }}"'
+      replace: '\1 {{ ansible_processor_cores }}'
   - name: Set RMI Host
     replace:
       path: /etc/cassandra/conf/cassandra-env.sh

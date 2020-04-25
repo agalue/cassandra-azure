@@ -33,25 +33,18 @@ all:
       vars:
         opennms:
           repo: stable
-          cassandra_seed: 10.0.2.11
           ring_buffer_size: 4194304
           cache_max_entries: 2000000
           connections_per_host: 24
       hosts:
         opennms:
           ansible_host: localhost
-    cassandra_servers: # Must match vars.tf
+    cassandra_servers:
       vars:
         cassandra:
           cluster_name: OpenNMS
-          seed: 10.0.2.11
           replication_factor: 2
           compaction_window_size: 7
           compaction_window_unit: DAYS
-      hosts:
-        cassandra1:
-          ansible_host: 10.0.2.11
-        cassandra2:
-          ansible_host: 10.0.2.12
-        cassandra3:
-          ansible_host: 10.0.2.13
+      hosts: # Must match total nodes in vars.tf (assumes DNS)
+        cassandra[1:3]:
