@@ -13,6 +13,7 @@ org.opennms.newts.config.cache.max_entries={{ opennms.cache_max_entries }}
 org.opennms.newts.config.writer_threads={{ ansible_processor_cores }}
 org.opennms.newts.config.cache.priming.enable=true
 org.opennms.newts.config.cache.priming.block_ms=-1
+org.opennms.newts.config.max-connections-per-host={{ opennms.connections_per_host }}
 
 # For collecting data every 30 seconds from OpenNMS and Cassandra
 org.opennms.newts.query.minimum_step=30000

@@ -1,6 +1,7 @@
 # Author: Alejandro Galue <agalue@opennms.org>
 #
 # WARNING: Make sure the content is consistent with ansible/inventory/inventory.yaml
+#          (IP Address list of the Cassandra cluster)
 
 variable "location" {
   description = "Azure Location/Region"
@@ -71,6 +72,7 @@ variable "opennms_ip_address" {
 }
 
 # Must exist within the main subnet range
+# Must match Ansible inventory
 variable "cassandra_ip_addresses" {
   description = "Cassandra IP Addresses. This also determines the size of the cluster."
   type        = list(string)
@@ -91,20 +93,4 @@ variable "cassandra_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
   default     = "Standard_DS3_v2" # Memory Optimized Instance with 4 Cores, 14 GB of RAM
-}
-
-variable "opennms_settings" {
-  description = "OpenNMS Settings"
-  type = object({
-    replication_factor   = number
-    cache_max_entries    = number
-    ring_buffer_size     = number
-    connections_per_host = number
-  })
-  default = {
-    replication_factor   = 2
-    cache_max_entries    = 2000000
-    ring_buffer_size     = 4194304
-    connections_per_host = 24
-  }
 }

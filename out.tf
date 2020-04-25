@@ -7,7 +7,3 @@ output "opennms_public_ip" {
 output "cassandra_ip_addresses" {
   value = var.cassandra_ip_addresses
 }
-
-output "opennms_settings" {
-  value = var.opennms_settings
-}

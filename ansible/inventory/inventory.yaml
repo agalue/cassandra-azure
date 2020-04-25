@@ -1,6 +1,7 @@
 # Author: Alejandro Galue <agalue@opennms.org>
 #
 # WARNING: Make sure the content is consistent with vars.tf
+#          (IP Address list of the Cassandra cluster)
 ---
 all:
   vars:
@@ -35,10 +36,11 @@ all:
           cassandra_seed: 10.0.2.11
           ring_buffer_size: 4194304
           cache_max_entries: 2000000
+          connections_per_host: 24
       hosts:
         opennms:
           ansible_host: localhost
-    cassandra_servers:
+    cassandra_servers: # Must match vars.tf
       vars:
         cassandra:
           cluster_name: OpenNMS
