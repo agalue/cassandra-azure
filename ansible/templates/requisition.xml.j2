@@ -1,0 +1,17 @@
+<model-import date-stamp="2020-04-24T00:00:00.000-04:00" foreign-source="Inventory">
+{% for host in hostvars %}
+  <node building="Vagrant" foreign-id="{{ host }}" node-label="{{ host }}">
+  {% if host == 'opennms' %}
+    <interface ip-addr="127.0.0.1" status="1" snmp-primary="N">
+      <monitored-service service-name="OpenNMS-JVM"/>
+      <monitored-service service-name="PostgreSQL"/>
+    </interface>
+  {% else %}
+    <interface ip-addr="{{ hostvars[host].ansible_host }}" status="1" snmp-primary="P">
+      <monitored-service service-name="JMX-Cassandra-Newts"/>
+      <monitored-service service-name="JMX-Cassandra"/>
+    </interface>
+  {% endif %}
+  </node>
+{% endfor %}
+</model-import>

@@ -1,0 +1,136 @@
+##############################################################################
+# Install and configure Cassandra
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Install Cassandra
+  hosts: cassandra_servers
+  become: true
+  tasks:
+  - name: Install Dependencies
+    package:
+      state: latest
+      name:
+      - java-1.8.0-openjdk-devel
+      - python2
+      - parted
+      - mdadm
+      - patch
+  - name: Initialize Disks
+    parted:
+      device: '{{ item }}'
+      number: 1
+      flags: [ raid ]
+      state: present
+    loop:
+    - /dev/sdc
+    - /dev/sdd
+  - name: Check existence of the RAID device
+    register: raid_dev
+    stat:
+      path: /dev/md0
+  - name: Create RAID0 device
+    shell: 'mdadm --create --verbose /dev/md0 --level=stripe --name=cassandra --raid-devices=2 /dev/sd[c-d]1'
+    when: not raid_dev.stat.exists
+    args:
+      creates: /dev/md0
+  - name: Create a xfs filesystem on /dev/md0
+    filesystem:
+      fstype: xfs
+      dev: /dev/md0
+  - name: Mount Cassandra Directory
+    mount:
+      path: /var/lib/cassandra
+      src: /dev/md0
+      fstype: xfs
+      opts: defaults,noatime
+      state: mounted
+      boot: yes
+  - name: Install Cassandra Repository
+    copy:
+      src: files/cassandra.repo
+      dest: /etc/yum.repos.d/cassandra.repo
+  - name: Install Cassandra
+    package:
+      state: latest
+      name:
+      - cassandra
+      - cassandra-tools
+  - name: Set cluster_name
+    replace:
+      path: /etc/cassandra/conf/cassandra.yaml
+      regexp: '^(cluster_name:).*'
+      replace: '\1 "{{ cassandra.cluster_name }}"'
+  - name: Set listen_address
+    replace:
+      path: /etc/cassandra/conf/cassandra.yaml
+      regexp: '^(listen_address:).*'
+      replace: '\1 "{{ ansible_eth0.ipv4.address }}"'
+  - name: Set rpc_address
+    replace:
+      path: /etc/cassandra/conf/cassandra.yaml
+      regexp: '^(rpc_address:).*'
+      replace: '\1 "{{ ansible_eth0.ipv4.address }}"'
+  - name: Set seeds
+    replace:
+      path: /etc/cassandra/conf/cassandra.yaml
+      regexp: '^(.*seeds:).*'
+      replace: '\1 "{{ cassandra.seed }}"'
+  - name: Set concurrent_compactors
+    replace:
+      path: /etc/cassandra/conf/cassandra.yaml
+      regexp: '^.*(concurrent_compactors:).*'
+      replace: '\1 "{{ ansible_processor_cores }}"'
+  - name: Set RMI Host
+    replace:
+      path: /etc/cassandra/conf/cassandra-env.sh
+      regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
+      replace: '\1={{ ansible_eth0.ipv4.address }}"'
+  - name: Enable jmxremote.access
+    replace:
+      path: /etc/cassandra/conf/cassandra-env.sh
+      regexp: '^[#](JVM_OPTS=".*jmxremote.access")'
+      replace: '\1'
+  - name: Disable LOCAL_JMX
+    replace:
+      path: /etc/cassandra/conf/cassandra-env.sh
+      regexp: '^(.*LOCAL_JMX)=yes'
+      replace: '\1=no'
+  - name: Enable MAX_HEAP_SIZE
+    replace:
+      path: /etc/cassandra/conf/cassandra-env.sh
+      regexp: '^[#](MAX_HEAP_SIZE)=.*'
+      replace: '\1={{ (ansible_memtotal_mb / 2) | int }}M'
+  - name: Enable HEAP_NEWSIZE
+    replace:
+      path: /etc/cassandra/conf/cassandra-env.sh
+      regexp: '^[#](HEAP_NEWSIZE)=.*'
+      replace: '\1={{ (ansible_memtotal_mb / 2) | int }}M'
+  - name: Copy jvm.options
+    copy:
+      src: files/cassandra.jvm.options
+      dest: /etc/cassandra/conf/jvm.options
+  - name: Copy jmxremote.password
+    copy:
+      src: files/cassandra.jmxremote.password
+      dest: /etc/cassandra/jmxremote.password
+      owner: cassandra
+      group: cassandra
+      mode: '0400'
+  - name: Copy jmxremote.access
+    copy:
+      src: files/cassandra.jmxremote.access
+      dest: /etc/cassandra/jmxremote.access
+      owner: cassandra
+      group: cassandra
+      mode: '0400'
+  - name: Apply patch to /etc/init.d/cassandra
+    patch:
+      src: files/cassandra.patch
+      dest: /etc/init.d/cassandra
+  - name: Copy Newts CQL file
+    template:
+      src: templates/newts.cql.j2
+      dest: /etc/cassandra/conf/newts.cql
+ 

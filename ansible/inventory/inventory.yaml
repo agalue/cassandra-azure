@@ -1,0 +1,67 @@
+# Author: Alejandro Galue <agalue@opennms.org>
+#
+# WARNING: Make sure the content is consistent with vars.tf
+#          (IP Address list of the Cassandra cluster)
+---
+all:
+  vars:
+    ansible_user: agalue
+    ansible_port: 22
+    ansible_private_key_file: global-ssh-key
+    snmp:
+      syscontact: Alejandro Galue <agalue@opennms.org>
+      syslocation: Azure
+    sysctl_config:
+      net.ipv4.tcp_keepalive_time: 60
+      net.ipv4.tcp_keepalive_probes: 3
+      net.ipv4.tcp_keepalive_intvl: 10
+      net.core.rmem_max: 16777216
+      net.core.wmem_max: 16777216
+      net.core.rmem_default: 16777216
+      net.core.wmem_default: 16777216
+      net.core.optmem_max: 40960
+      net.ipv4.tcp_rmem: 4096 87380 16777216
+      net.ipv4.tcp_wmem: 4096 65536 16777216
+      net.ipv4.tcp_window_scaling: 1
+      net.core.netdev_max_backlog: 2500
+      net.core.somaxconn: 65000
+      vm.swappiness: 1
+      vm.zone_reclaim_mode: 0
+      vm.max_map_count: 1048575
+  children:
+    onms_servers:
+      vars:
+        opennms:
+          repo: stable
+          cassandra_seed: 10.0.2.11
+          ring_buffer_size: 4194304
+          cache_max_entries: 2000000
+          connections_per_host: 24
+      hosts:
+        opennms:
+          ansible_host: localhost
+    cassandra_servers: # Must match vars.tf
+      vars:
+        cassandra:
+          cluster_name: OpenNMS
+          seed: 10.0.2.11
+          replication_factor: 2
+          compaction_window_size: 7
+          compaction_window_unit: DAYS
+      hosts:
+        cassandra1:
+          ansible_host: 10.0.2.11
+        cassandra2:
+          ansible_host: 10.0.2.12
+        cassandra3:
+          ansible_host: 10.0.2.13
+        cassandra4:
+          ansible_host: 10.0.2.14
+        cassandra5:
+          ansible5host: 10.0.2.15
+        cassandra6:
+          ansible_host: 10.0.2.16
+        cassandra7:
+          ansible_host: 10.0.2.17
+        cassandra8:
+          ansible_host: 10.0.2.18

@@ -1,0 +1,64 @@
+##############################################################################
+# Common Settings for ALL the Machines
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Common Configuration
+  hosts: all
+  become: true
+  tasks:
+  - name: Kernel Tuning
+    with_dict: '{{ sysctl_config }}'
+    sysctl:
+      name: '{{ item.key }}'
+      value: '{{ item.value }}'
+      sysctl_set: yes
+      state: present
+      reload: yes
+      ignoreerrors: yes
+  - name: Disable THP
+    shell: 'echo "never" | tee /sys/kernel/mm/transparent_hugepage/{{ item }}'
+    changed_when: False
+    with_items:
+    - enabled
+    - defrag
+  - name: Install EPEL Repository
+    package:
+      state: latest
+      name:
+      - epel-release
+  - name: Install Dependencies
+    package:
+      state: latest
+      name:
+      - git
+      - vim
+      - net-snmp
+      - net-snmp-utils
+      - jq
+      - net-tools
+      - dstat
+      - htop
+      - nmap-ncat
+      - tree
+      - telnet
+      - curl
+      - nmon
+      - haveged
+  - name: SNMP Configuration
+    template:
+      backup: yes
+      src: templates/snmpd.conf.j2
+      dest: /etc/snmp/snmpd.conf
+  - name: Start snmpd Service
+    service:
+      name: snmpd
+      state: started
+      enabled: yes
+  - name: Start haveged Service
+    service:
+      name: haveged
+      state: started
+      enabled: yes
+

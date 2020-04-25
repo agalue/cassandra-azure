@@ -112,11 +112,14 @@ resource "azurerm_virtual_machine" "cassandra" {
   os_profile {
     computer_name  = "cassandra${count.index + 1}"
     admin_username = var.username
-    admin_password = var.password
   }
 
   os_profile_linux_config {
-    disable_password_authentication = false
+    disable_password_authentication = true
+    ssh_keys {
+      path     = "/home/${var.username}/.ssh/authorized_keys"
+      key_data = file("./ansible/global-ssh-key.pub")
+    }
   }
 
   storage_os_disk {
@@ -138,36 +141,6 @@ resource "azurerm_virtual_machine" "cassandra" {
       lun                       = disk.key
     }
   }
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-  }
-}
-
-data "template_file" "cassandra" {
-  template = file("cassandra.tpl")
-
-  vars = {
-    cluster_name       = "OpenNMS"
-    seed_name          = var.cassandra_ip_addresses[0]
-    replication_factor = var.opennms_settings.replication_factor
-  }
-}
-
-resource "azurerm_virtual_machine_extension" "cassandra" {
-  count                = length(var.cassandra_ip_addresses)
-  name                 = "cassandra${count.index + 1}-vmext"
-  virtual_machine_id   = azurerm_virtual_machine.cassandra[count.index].id
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.0"
-
-  protected_settings = <<PROT
-    {
-      "script": "${base64encode(data.template_file.cassandra.rendered)}"
-    }
-    PROT
 
   tags = {
     Environment = "Test"
