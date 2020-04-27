@@ -126,7 +126,7 @@
       group: cassandra
       mode: '0400'
   - name: Apply patch to /etc/init.d/cassandra
-    patch:
+    patch: # https://issues.apache.org/jira/browse/CASSANDRA-15273
       src: files/cassandra.patch
       dest: /etc/init.d/cassandra
   - name: Copy Newts CQL file

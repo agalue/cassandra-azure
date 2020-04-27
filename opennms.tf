@@ -127,7 +127,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
     destination = "/home/${var.username}"
   }
 
-  # Install Ansible
+  # Install Ansible and run the Playbook
   provisioner "remote-exec" {
     inline = [
       "sudo dnf install -q -y python3 python3-pip",
