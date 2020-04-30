@@ -20,7 +20,7 @@
   - name: Disable THP
     shell: 'echo "never" | tee /sys/kernel/mm/transparent_hugepage/{{ item }}'
     changed_when: False
-    with_items:
+    loop:
     - enabled
     - defrag
   - name: Install EPEL Repository

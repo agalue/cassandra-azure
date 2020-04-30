@@ -16,7 +16,7 @@
       state: started
       enabled: yes
   - name: Wait while node joins the cluster
-    shell: 'nodetool -u cassandra -pw cassandra status 2>/dev/null | grep {{ ansible_eth0.ipv4.address }}'
+    shell: 'nodetool -u cassandra -pw cassandra status 2>/dev/null | grep {{ cassandra.target_ipv4 }}'
     changed_when: False
     register: result
     until: result.stdout is regex("^UN.*")
@@ -27,12 +27,12 @@
   hosts: cassandra1
   tasks:
   - name: Check if keyspace exists
-    command: 'cqlsh {{ ansible_eth0.ipv4.address }} -e "describe keyspaces"'
+    command: 'cqlsh {{ cassandra.target_ipv4 }} -e "describe keyspaces"'
     register: keyspaces
     changed_when: False
   - name: Create keyspace
     register: cqlsh_out
-    command: 'cqlsh {{ ansible_eth0.ipv4.address }} -f /etc/cassandra/conf/newts.cql'
+    command: 'cqlsh {{ cassandra.target_ipv4 }} -f /etc/cassandra/conf/newts.cql'
     changed_when: '"newts" in keyspaces.stdout'
 
 - name: Start OpenNMS

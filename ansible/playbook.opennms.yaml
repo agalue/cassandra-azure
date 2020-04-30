@@ -59,7 +59,7 @@
       path: '{{ item }}'
       regexp: 'cassandra-(username|password)'
       replace: 'cassandra'
-    with_items:
+    loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml
   - name: Update polling and collection interval
@@ -67,7 +67,7 @@
       path: '{{ item }}'
       regexp: 'interval="300000"'
       replace: 'interval="30000"'
-    with_items:
+    loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml
   - name: Initialize OpenNMS Schema

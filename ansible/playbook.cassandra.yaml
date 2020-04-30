@@ -7,6 +7,8 @@
 - name: Install Cassandra
   hosts: cassandra_servers
   become: true
+  vars:
+    raid_device: /dev/md0
   tasks:
   - name: Install Dependencies
     package:
@@ -23,26 +25,19 @@
       number: 1
       flags: [ raid ]
       state: present
-    loop:
-    - /dev/sdc
-    - /dev/sdd
-  - name: Check existence of the RAID device
-    register: raid_dev
-    stat:
-      path: /dev/md0
-  - name: Create RAID0 device
-    shell: 'mdadm --create --verbose /dev/md0 --level=stripe --name=cassandra --raid-devices=2 /dev/sd[c-d]1'
-    when: not raid_dev.stat.exists
+    loop: '{{ cassandra.disk_devices }}'
+  - name: Create RAID0 device at {{ raid_device }}
+    shell: 'mdadm --create {{ raid_device }} --level=stripe --name=cassandra --raid-devices=2 {{ cassandra.disk_devices | join("1 ") }}1'
     args:
-      creates: /dev/md0
-  - name: Create a xfs filesystem on /dev/md0
+      creates: '{{ raid_device }}'
+  - name: Create a xfs filesystem on {{ raid_device }}
     filesystem:
       fstype: xfs
-      dev: /dev/md0
+      dev: '{{ raid_device }}'
   - name: Mount Cassandra Directory
     mount:
       path: /var/lib/cassandra
-      src: /dev/md0
+      src: '{{ raid_device }}'
       fstype: xfs
       opts: defaults,noatime
       state: mounted
@@ -66,12 +61,12 @@
     replace:
       path: /etc/cassandra/conf/cassandra.yaml
       regexp: '^(listen_address:).*'
-      replace: '\1 {{ ansible_eth0.ipv4.address }}'
+      replace: '\1 {{ cassandra.target_ipv4 }}'
   - name: Set rpc_address
     replace:
       path: /etc/cassandra/conf/cassandra.yaml
       regexp: '^(rpc_address:).*'
-      replace: '\1 {{ ansible_eth0.ipv4.address }}'
+      replace: '\1 {{ cassandra.target_ipv4 }}'
   - name: Set seeds
     replace:
       path: /etc/cassandra/conf/cassandra.yaml
@@ -86,7 +81,7 @@
     replace:
       path: /etc/cassandra/conf/cassandra-env.sh
       regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
-      replace: '\1={{ ansible_eth0.ipv4.address }}"'
+      replace: '\1={{ cassandra.target_ipv4 }}"'
   - name: Enable jmxremote.access
     replace:
       path: /etc/cassandra/conf/cassandra-env.sh
