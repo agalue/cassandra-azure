@@ -126,6 +126,6 @@
       dest: /etc/init.d/cassandra
   - name: Copy Newts CQL file
     template:
-      src: templates/newts.cql.j2
+      src: newts.cql.j2
       dest: /etc/cassandra/conf/newts.cql
  

@@ -14,12 +14,7 @@
       name:
       - java-11-openjdk-devel
       - postgresql-server
-  - name: Check if pg_hba.conf exists
-    register: pg_hba
-    stat:
-      path: /var/lib/pgsql/data/pg_hba.conf
   - name: Initialize Database
-    when: not pg_hba.stat.exists
     command: 'postgresql-setup initdb'
     args:
       creates: /var/lib/pgsql/data/pg_hba.conf
@@ -48,11 +43,11 @@
       - opennms-webapp-hawtio
   - name: Copy Newts Configuration
     template:
-      src: templates/newts.properties.j2
+      src: newts.properties.j2
       dest: /opt/opennms/etc/opennms.properties.d/newts.properties
   - name: Copy JVM Properties
     template:
-      src: templates/opennms.conf.j2
+      src: opennms.conf.j2
       dest: /opt/opennms/etc/opennms.conf
   - name: Update Cassandra credentials for Pollerd and Collectd
     replace:

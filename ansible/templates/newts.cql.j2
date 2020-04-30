@@ -1,3 +1,5 @@
+{# Author: Alejandro Galue <agalue@opennms.org> #}
+
 CREATE KEYSPACE IF NOT EXISTS newts WITH replication = {'class' : 'SimpleStrategy', 'replication_factor' : {{ cassandra.replication_factor }} };
 
 CREATE TABLE IF NOT EXISTS newts.samples (

@@ -23,6 +23,7 @@
     delay: 30
     retries: 10
 
+# This runs once, from the first host in the cluster.
 - name: Configure keyspace for Newts
   hosts: cassandra1
   tasks:
@@ -31,13 +32,14 @@
     register: keyspaces
     changed_when: False
   - name: Create keyspace
-    register: cqlsh_out
+    when: not "newts" in keyspaces.stdout
     command: 'cqlsh {{ cassandra.target_ipv4 }} -f /etc/cassandra/conf/newts.cql'
-    changed_when: '"newts" in keyspaces.stdout'
 
 - name: Start OpenNMS
   hosts: onms_servers
   become: true
+  vars:
+    requisition_name: Inventory
   tasks:
   - name: Start OpenNMS Service
     service:
@@ -54,18 +56,18 @@
       user: admin
       password: admin
       method: POST
-      body: '{{ lookup("template", "templates/requisition.xml.j2") }}'
+      body: '{{ lookup("template", "requisition.xml.j2") }}'
       headers:
         Content-Type: application/xml
       status_code: 202
-      creates: /opt/opennms/etc/imports/Inventory.xml
+      creates: '/opt/opennms/etc/imports/{{ requisition_name }}.xml'
   - name: Import requisition
     uri:
-      url: http://127.0.0.1:8980/opennms/rest/requisitions/Inventory/import
+      url: 'http://127.0.0.1:8980/opennms/rest/requisitions/{{ requisition_name }}/import'
       force_basic_auth: yes
       user: admin
       password: admin
       method: PUT
       status_code: 202
-      creates: /opt/opennms/etc/imports/Inventory.xml
+      creates: '/opt/opennms/etc/imports/{{ requisition_name }}.xml'
 

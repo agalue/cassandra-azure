@@ -1,4 +1,5 @@
-<model-import date-stamp="2020-04-24T00:00:00.000-04:00" foreign-source="Inventory">
+{# Author: Alejandro Galue <agalue@opennms.org> #}
+<model-import date-stamp="2020-04-24T00:00:00.000-04:00" foreign-source="{{ requisition_name }}">
 {% for host in hostvars %}
   <node foreign-id="{{ host }}" node-label="{{ host }}">
   {% if host == 'opennms' %}
