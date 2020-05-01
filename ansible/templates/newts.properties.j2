@@ -10,13 +10,14 @@ org.opennms.newts.config.keyspace=newts
 org.opennms.newts.config.hostname=cassandra1
 
 # Basic tuning based on the expected injection rate
-org.opennms.newts.config.ring_buffer_size={{ opennms.ring_buffer_size }}
-org.opennms.newts.config.cache.max_entries={{ opennms.cache_max_entries }}
+#org.opennms.newts.config.ttl={{ opennms.newts.ttl }}
+org.opennms.newts.config.ring_buffer_size={{ opennms.newts.ring_buffer_size }}
+org.opennms.newts.config.cache.max_entries={{ opennms.newts.cache_max_entries }}
 org.opennms.newts.config.writer_threads={{ ansible_processor_cores }}
 org.opennms.newts.config.cache.priming.enable=true
 org.opennms.newts.config.cache.priming.block_ms=-1
-org.opennms.newts.config.max-connections-per-host={{ opennms.connections_per_host }}
+org.opennms.newts.config.max-connections-per-host={{ opennms.newts.connections_per_host }}
 
-# For collecting data every 30 seconds from OpenNMS and Cassandra
-org.opennms.newts.query.minimum_step=30000
-org.opennms.newts.query.heartbeat=450000
+# To control collection interval for visualization purposes
+org.opennms.newts.query.minimum_step={{ opennms.newts.minimum_step }}
+org.opennms.newts.query.heartbeat={{ opennms.newts.heartbeat }}

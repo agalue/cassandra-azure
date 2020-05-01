@@ -53,7 +53,7 @@
     replace:
       path: '{{ item }}'
       regexp: 'cassandra-(username|password)'
-      replace: 'cassandra'
+      replace: 'cassandra' # Must match cassandra.jmxremote.password
     loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml
@@ -61,7 +61,7 @@
     replace:
       path: '{{ item }}'
       regexp: 'interval="300000"'
-      replace: 'interval="30000"'
+      replace: 'interval="{{ opennms.interval }}"'
     loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml
