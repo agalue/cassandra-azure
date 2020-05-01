@@ -140,5 +140,6 @@ resource "azurerm_linux_virtual_machine" "opennms" {
   tags = {
     Environment = "Test"
     Department  = "Support"
+    Application = "OpenNMS"
   }
 }

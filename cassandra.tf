@@ -145,5 +145,6 @@ resource "azurerm_virtual_machine" "cassandra" {
   tags = {
     Environment = "Test"
     Department  = "Support"
+    Application = "Cassandra"
   }
 }
