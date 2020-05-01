@@ -16,7 +16,7 @@
       state: started
       enabled: yes
   - name: Wait while node joins the cluster
-    shell: 'nodetool -u cassandra -pw cassandra status 2>/dev/null | grep {{ cassandra.target_ipv4 }}'
+    shell: 'set -o pipefail && nodetool -u cassandra -pw cassandra status 2>/dev/null | grep {{ cassandra.target_ipv4 }}'
     changed_when: False
     register: result
     until: result.stdout is regex("^UN.*")

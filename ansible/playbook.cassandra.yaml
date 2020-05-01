@@ -12,7 +12,7 @@
   tasks:
   - name: Install Dependencies
     package:
-      state: latest
+      state: present
       name:
       - java-1.8.0-openjdk-devel
       - python2
@@ -27,7 +27,7 @@
       state: present
     loop: '{{ cassandra.disk_devices }}'
   - name: Create RAID0 device at {{ raid_device }}
-    shell: 'mdadm --create {{ raid_device }} --level=stripe --name=cassandra --raid-devices=2 {{ cassandra.disk_devices | join("1 ") }}1'
+    shell: 'set -o pipefail && mdadm --create {{ raid_device }} --level=stripe --name=cassandra --raid-devices=2 {{ cassandra.disk_devices | join("1 ") }}1'
     args:
       creates: '{{ raid_device }}'
   - name: Create a xfs filesystem on {{ raid_device }}
@@ -48,7 +48,7 @@
       dest: /etc/yum.repos.d/cassandra.repo
   - name: Install Cassandra
     package:
-      state: latest
+      state: present
       name:
       - cassandra
       - cassandra-tools
@@ -128,4 +128,3 @@
     template:
       src: newts.cql.j2
       dest: /etc/cassandra/conf/newts.cql
- 

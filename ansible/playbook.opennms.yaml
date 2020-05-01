@@ -10,7 +10,7 @@
   tasks:
   - name: Install Dependencies
     package:
-      state: latest
+      state: present
       name:
       - java-11-openjdk-devel
       - postgresql-server

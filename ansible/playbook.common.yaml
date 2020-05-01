@@ -18,19 +18,19 @@
       reload: yes
       ignoreerrors: yes
   - name: Disable THP
-    shell: 'echo "never" | tee /sys/kernel/mm/transparent_hugepage/{{ item }}'
+    shell: 'set -o pipefail && echo "never" | tee /sys/kernel/mm/transparent_hugepage/{{ item }}'
     changed_when: False
     loop:
     - enabled
     - defrag
   - name: Install EPEL Repository
     package:
-      state: latest
+      state: present
       name:
       - epel-release
   - name: Install Dependencies
     package:
-      state: latest
+      state: present
       name:
       - git
       - vim
