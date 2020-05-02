@@ -10,16 +10,11 @@
   tasks:
   - name: Install Dependencies
     package:
-      state: latest
+      state: present
       name:
       - java-11-openjdk-devel
       - postgresql-server
-  - name: Check if pg_hba.conf exists
-    register: pg_hba
-    stat:
-      path: /var/lib/pgsql/data/pg_hba.conf
   - name: Initialize Database
-    when: not pg_hba.stat.exists
     command: 'postgresql-setup initdb'
     args:
       creates: /var/lib/pgsql/data/pg_hba.conf
@@ -48,26 +43,26 @@
       - opennms-webapp-hawtio
   - name: Copy Newts Configuration
     template:
-      src: templates/newts.properties.j2
+      src: newts.properties.j2
       dest: /opt/opennms/etc/opennms.properties.d/newts.properties
   - name: Copy JVM Properties
     template:
-      src: templates/opennms.conf.j2
+      src: opennms.conf.j2
       dest: /opt/opennms/etc/opennms.conf
   - name: Update Cassandra credentials for Pollerd and Collectd
     replace:
       path: '{{ item }}'
       regexp: 'cassandra-(username|password)'
-      replace: 'cassandra'
-    with_items:
+      replace: 'cassandra' # Must match cassandra.jmxremote.password
+    loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml
   - name: Update polling and collection interval
     replace:
       path: '{{ item }}'
       regexp: 'interval="300000"'
-      replace: 'interval="30000"'
-    with_items:
+      replace: 'interval="{{ opennms.interval }}"'
+    loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml
   - name: Initialize OpenNMS Schema

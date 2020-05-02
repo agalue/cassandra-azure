@@ -72,7 +72,7 @@ variable "opennms_ip_address" {
 }
 
 # Must exist within the main subnet range
-# Must match Ansible inventory
+# Must match hosts range for the cassandra_servers group in the Ansible inventory
 variable "cassandra_ip_addresses" {
   description = "Cassandra IP Addresses. This also determines the size of the cluster."
   type        = list(string)

@@ -20,21 +20,16 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
 
 > *NOTE*: The templates requires Terraform version 0.12.x.
 
-* Tweak the common settings on [vars.tf](vars.tf), and make sure they are consistent with the [Ansible Intentory](ansible/inventory/inventory.yaml).
+* Tweak the common settings on [vars.tf](vars.tf) if necessary, and make sure the size of the Cassandra cluster is consistent with the [Ansible Intentory](ansible/inventory/inventory.yaml).
 
 * Execute the following commands from the repository's root directory (at the same level as the `.tf` files):
 
   ```shell
   terraform init
-  terraform plan
-  terraform apply -auto-approve
+  terraform apply
   ```
 
-* Wait for the Cassandra cluster and OpenNMS to be ready, prior execute the `metrics:stress` command.
-
-  Use the `nodetool status` command to verify that all the required instances have joined the cluster.
-
-  OpenNMS will wait only for the seed node to create the Newts keyspace and once the UI is available, it creates a requisition with 2 nodes: the OpenNMS server itself and the Cassandra Seed Node, to collect statistics through JMX and SNMP every 30 seconds. This will help with the analysis.
+  Terraform will install Ansible on the OpenNMS server and run the playbook. When it is done, you're ready to use the Metrics Stress command.
 
 * Connect to the Karaf Shell through SSH:
 
@@ -46,24 +41,24 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
 
   The OpenNMS Server allows SSH via its public IP.
 
-* Execute the `metrics:stress` command on each OpenNMS server. The following is an example to generate fake samples to be injected into the cluster.
+* Execute the `opennms:stress-metrics` command on each OpenNMS server. The following is an example to generate fake samples to be injected into the cluster.
 
   For 20K:
 
   ```shell
-  metrics:stress -r 60 -n 6000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
+  opennms:stress-metrics -r 60 -n 6000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
   ```
 
   For 40K:
 
   ```shell
-  metrics:stress -r 60 -n 12000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
+  opennms:stress-metrics -r 60 -n 12000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
   ```
 
   For 100K:
 
   ```shell
-  metrics:stress -r 60 -n 15000 -f 20 -g 5 -a 20 -s 1 -t 200 -i 300
+  opennms:stress-metrics -r 60 -n 15000 -f 20 -g 5 -a 20 -s 1 -t 200 -i 300
   ```
 
   Using `Standard_DS4_v2` for OpenNMS and `Standard_DS3_v2` on a 3 nodes cluster, the solution was able to handle 20K samples per second, but not 40K.
