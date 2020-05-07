@@ -43,8 +43,8 @@
       state: mounted
       boot: yes
   - name: Install Cassandra Repository
-    copy:
-      src: files/cassandra.repo
+    template:
+      src: cassandra.repo.j2
       dest: /etc/yum.repos.d/cassandra.repo
   - name: Install Cassandra
     package:
@@ -104,25 +104,25 @@
       replace: '\1={{ (ansible_memtotal_mb / 2) | int }}M'
   - name: Copy jvm.options
     copy:
-      src: files/cassandra.jvm.options
+      src: cassandra.jvm.options
       dest: /etc/cassandra/conf/jvm.options
   - name: Copy jmxremote.password
     copy:
-      src: files/cassandra.jmxremote.password
+      src: cassandra.jmxremote.password
       dest: /etc/cassandra/jmxremote.password
       owner: cassandra
       group: cassandra
       mode: '0400'
   - name: Copy jmxremote.access
     copy:
-      src: files/cassandra.jmxremote.access
+      src: cassandra.jmxremote.access
       dest: /etc/cassandra/jmxremote.access
       owner: cassandra
       group: cassandra
       mode: '0400'
   - name: Apply patch to /etc/init.d/cassandra
     patch: # https://issues.apache.org/jira/browse/CASSANDRA-15273
-      src: files/cassandra.patch
+      src: cassandra.patch
       dest: /etc/init.d/cassandra
   - name: Copy Newts CQL file
     template:
