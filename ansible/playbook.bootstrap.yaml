@@ -26,9 +26,11 @@
 # This runs once, from the first host in the cluster.
 - name: Configure keyspace for Newts
   hosts: cassandra1
+  environment:
+    PYTHONPATH: /usr/lib/python2.7/site-packages/
   tasks:
   - name: Check if keyspace exists
-    command: 'cqlsh {{ cassandra.target_ipv4 }} -e "describe keyspaces"'
+    shell: 'echo "describe keyspaces" | cqlsh {{ cassandra.target_ipv4 }}'
     register: keyspaces
     changed_when: False
   - name: Create keyspace

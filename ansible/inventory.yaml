@@ -49,7 +49,7 @@ all:
     cassandra_servers:
       vars:
         cassandra:
-          repo_version: 311x
+          repo_version: 40x
           cluster_name: OpenNMS
           replication_factor: 2
           compaction_window_size: 7 # Must be consistent with opennms.newts.ttl

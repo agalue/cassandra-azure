@@ -17,7 +17,11 @@ CREATE TABLE IF NOT EXISTS newts.samples (
   'expired_sstable_check_frequency_seconds': '86400',
   'class': 'TimeWindowCompactionStrategy'
 } AND gc_grace_seconds = 604800
+{% if cassandra.repo_version != '40x' %}
   AND read_repair_chance = 0;
+{% else %}
+;
+{% endif %}
 
 CREATE TABLE IF NOT EXISTS newts.terms (
   context text,
