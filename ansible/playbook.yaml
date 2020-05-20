@@ -7,7 +7,6 @@
 - import_playbook: playbook.common.yaml
 - import_playbook: playbook.opennms.yaml
 - import_playbook: playbook.cassandra.yaml
-- import_playbook: playbook.cassandra.yaml
 - import_playbook: playbook.scylla.yaml
 - import_playbook: playbook.bootstrap.yaml
 
