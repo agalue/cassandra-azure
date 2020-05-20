@@ -33,5 +33,5 @@ resource "azurerm_subnet" "cassandra" {
   name                 = "cassandra-subnet"
   resource_group_name  = local.resource_group
   virtual_network_name = local.vnet
-  address_prefix       = var.subnet
+  address_prefixes     = [var.subnet]
 }
