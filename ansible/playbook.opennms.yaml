@@ -41,6 +41,10 @@
       - opennms-core
       - opennms-webapp-jetty
       - opennms-webapp-hawtio
+  - name: Copy Default Foreign Source
+    copy:
+      src: default-foreign-source.xml
+      dest: /opt/opennms/etc/default-foreign-source.xml
   - name: Copy Newts Configuration
     template:
       src: newts.properties.j2

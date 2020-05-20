@@ -4,132 +4,135 @@
 ##############################################################################
 
 ---
-- name: Install Cassandra
+- name: Setup Cassandra
   hosts: cassandra_servers
   become: true
   vars:
     raid_device: /dev/md0
   tasks:
-  - name: Install Dependencies
-    package:
-      state: present
-      name:
-      - 'java-{{ "11" if cassandra.repo_version == "40x" else "1.8.0" }}-openjdk-devel'
-      - python2
-      - parted
-      - mdadm
-      - patch
-  - name: Initialize Disks
-    parted:
-      device: '{{ item }}'
-      number: 1
-      flags: [ raid ]
-      state: present
-    loop: '{{ cassandra.disk_devices }}'
-  - name: Create RAID0 device at {{ raid_device }}
-    shell: 'set -o pipefail && mdadm --create {{ raid_device }} --level=stripe --name=cassandra --raid-devices=2 {{ cassandra.disk_devices | join("1 ") }}1'
-    args:
-      creates: '{{ raid_device }}'
-  - name: Create a xfs filesystem on {{ raid_device }}
-    filesystem:
-      fstype: xfs
-      dev: '{{ raid_device }}'
-  - name: Mount Cassandra Directory
-    mount:
-      path: /var/lib/cassandra
-      src: '{{ raid_device }}'
-      fstype: xfs
-      opts: defaults,noatime
-      state: mounted
-      boot: yes
-  - name: Install Cassandra Repository
-    template:
-      src: cassandra.repo.j2
-      dest: /etc/yum.repos.d/cassandra.repo
-  - name: Install Cassandra
-    package:
-      state: present
-      name:
-      - cassandra
-      - cassandra-tools
-  - name: Enable Java 11 for Cassandra 4
-    when: cassandra.repo_version == '40x'
-    alternatives:
-      name: java
-      link: /usr/bin/java
-      path: /usr/lib/jvm/java-11/bin/java
-  - name: Set cluster_name
-    replace:
-      path: /etc/cassandra/conf/cassandra.yaml
-      regexp: '^(cluster_name:).*'
-      replace: '\1 {{ cassandra.cluster_name }}'
-  - name: Set listen_address
-    replace:
-      path: /etc/cassandra/conf/cassandra.yaml
-      regexp: '^(listen_address:).*'
-      replace: '\1 {{ cassandra.target_ipv4 }}'
-  - name: Set rpc_address
-    replace:
-      path: /etc/cassandra/conf/cassandra.yaml
-      regexp: '^(rpc_address:).*'
-      replace: '\1 {{ cassandra.target_ipv4 }}'
-  - name: Set cassandra1 as seed node
-    replace:
-      path: /etc/cassandra/conf/cassandra.yaml
-      regexp: '^(.*seeds:).*'
-      replace: '\1 cassandra1{{ ":7000" if cassandra.repo_version == "40x" else "" }}'
-  - name: Set concurrent_compactors
-    replace:
-      path: /etc/cassandra/conf/cassandra.yaml
-      regexp: '^.*(concurrent_compactors:).*'
-      replace: '\1 {{ ansible_processor_cores }}'
-  - name: Set RMI Host
-    replace:
-      path: /etc/cassandra/conf/cassandra-env.sh
-      regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
-      replace: '\1={{ cassandra.target_ipv4 }}"'
-  - name: Enable jmxremote.access
-    replace:
-      path: /etc/cassandra/conf/cassandra-env.sh
-      regexp: '^[#](JVM_OPTS=".*jmxremote.access")'
-      replace: '\1'
-  - name: Disable LOCAL_JMX
-    replace:
-      path: /etc/cassandra/conf/cassandra-env.sh
-      regexp: '^(.*LOCAL_JMX)=yes'
-      replace: '\1=no'
-  - name: Update Heap Size
-    replace:
-      path: /etc/cassandra/conf/cassandra-env.sh
-      regexp: '^[#]({{ item }})=.*'
-      replace: '\1={{ (ansible_memtotal_mb / 2) | int }}M'
-    loop:
-    - MAX_HEAP_SIZE
-    - HEAP_NEWSIZE
-  - name: Copy jvm.options
-    template:
-      src: cassandra.jvm.options.j2
-      dest: '/etc/cassandra/conf/jvm{{ "11-server" if cassandra.repo_version == "40x" else "" }}.options'
-  - name: Copy jmxremote.password
-    copy:
-      src: cassandra.jmxremote.password
-      dest: /etc/cassandra/jmxremote.password
-      owner: cassandra
-      group: cassandra
-      mode: '0400'
-  - name: Copy jmxremote.access
-    copy:
-      src: cassandra.jmxremote.access
-      dest: /etc/cassandra/jmxremote.access
-      owner: cassandra
-      group: cassandra
-      mode: '0400'
-  - name: Apply patch to /etc/init.d/cassandra
-    when: cassandra.repo_version == '311x'
-    patch: # https://issues.apache.org/jira/browse/CASSANDRA-15273
-      src: cassandra.patch
-      dest: /etc/init.d/cassandra
-  - name: Copy Newts CQL file
-    template:
-      src: newts.cql.j2
-      dest: /etc/cassandra/conf/newts.cql
+  - name: Install and configure Cassandra
+    when: cassandra.vendor_repo == 'apache'
+    block:
+    - name: Install Dependencies
+      package:
+        state: present
+        name:
+        - 'java-{{ "11" if cassandra.repo_version == "40x" else "1.8.0" }}-openjdk-devel'
+        - python2
+        - parted
+        - mdadm
+        - patch
+    - name: Initialize Disks
+      parted:
+        device: '{{ item }}'
+        number: 1
+        flags: [ raid ]
+        state: present
+      loop: '{{ cassandra.disk_devices }}'
+    - name: Create RAID0 device at {{ raid_device }}
+      shell: 'set -o pipefail && mdadm --create {{ raid_device }} --level=stripe --name=cassandra --raid-devices=2 {{ cassandra.disk_devices | join("1 ") }}1'
+      args:
+        creates: '{{ raid_device }}'
+    - name: Create a xfs filesystem on {{ raid_device }}
+      filesystem:
+        fstype: xfs
+        dev: '{{ raid_device }}'
+    - name: Mount Cassandra Directory
+      mount:
+        path: /var/lib/cassandra
+        src: '{{ raid_device }}'
+        fstype: xfs
+        opts: defaults,noatime
+        state: mounted
+        boot: yes
+    - name: Install Cassandra Repository
+      template:
+        src: cassandra.repo.j2
+        dest: /etc/yum.repos.d/cassandra.repo
+    - name: Install Cassandra
+      package:
+        state: present
+        name:
+        - cassandra
+        - cassandra-tools
+    - name: Enable Java 11 for Cassandra 4
+      when: cassandra.repo_version == '40x'
+      alternatives:
+        name: java
+        link: /usr/bin/java
+        path: /usr/lib/jvm/java-11/bin/java
+    - name: Set cluster_name
+      replace:
+        path: /etc/cassandra/conf/cassandra.yaml
+        regexp: '^(cluster_name:).*'
+        replace: '\1 {{ cassandra.cluster_name }}'
+    - name: Set listen_address
+      replace:
+        path: /etc/cassandra/conf/cassandra.yaml
+        regexp: '^(listen_address:).*'
+        replace: '\1 {{ cassandra.target_ipv4 }}'
+    - name: Set rpc_address
+      replace:
+        path: /etc/cassandra/conf/cassandra.yaml
+        regexp: '^(rpc_address:).*'
+        replace: '\1 {{ cassandra.target_ipv4 }}'
+    - name: Set cassandra1 as seed node
+      replace:
+        path: /etc/cassandra/conf/cassandra.yaml
+        regexp: '^(.*seeds:).*'
+        replace: '\1 cassandra1{{ ":7000" if cassandra.repo_version == "40x" else "" }}'
+    - name: Set concurrent_compactors
+      replace:
+        path: /etc/cassandra/conf/cassandra.yaml
+        regexp: '^.*(concurrent_compactors:).*'
+        replace: '\1 {{ ansible_processor_cores }}'
+    - name: Set RMI Host
+      replace:
+        path: /etc/cassandra/conf/cassandra-env.sh
+        regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
+        replace: '\1={{ cassandra.target_ipv4 }}"'
+    - name: Enable jmxremote.access
+      replace:
+        path: /etc/cassandra/conf/cassandra-env.sh
+        regexp: '^[#](JVM_OPTS=".*jmxremote.access")'
+        replace: '\1'
+    - name: Disable LOCAL_JMX
+      replace:
+        path: /etc/cassandra/conf/cassandra-env.sh
+        regexp: '^(.*LOCAL_JMX)=yes'
+        replace: '\1=no'
+    - name: Update Heap Size
+      replace:
+        path: /etc/cassandra/conf/cassandra-env.sh
+        regexp: '^[#]({{ item }})=.*'
+        replace: '\1={{ (ansible_memtotal_mb / 2) | int }}M'
+      loop:
+      - MAX_HEAP_SIZE
+      - HEAP_NEWSIZE
+    - name: Copy jvm.options
+      template:
+        src: cassandra.jvm.options.j2
+        dest: '/etc/cassandra/conf/jvm{{ "11-server" if cassandra.repo_version == "40x" else "" }}.options'
+    - name: Copy jmxremote.password
+      copy:
+        src: cassandra.jmxremote.password
+        dest: /etc/cassandra/jmxremote.password
+        owner: cassandra
+        group: cassandra
+        mode: '0400'
+    - name: Copy jmxremote.access
+      copy:
+        src: cassandra.jmxremote.access
+        dest: /etc/cassandra/jmxremote.access
+        owner: cassandra
+        group: cassandra
+        mode: '0400'
+    - name: Apply patch to /etc/init.d/cassandra
+      when: cassandra.repo_version == '311x'
+      patch: # https://issues.apache.org/jira/browse/CASSANDRA-15273
+        src: cassandra.patch
+        dest: /etc/init.d/cassandra
+    - name: Copy Newts CQL file
+      template:
+        src: newts.cql.j2
+        dest: /etc/cassandra/conf/newts.cql

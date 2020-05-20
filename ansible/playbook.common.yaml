@@ -8,6 +8,9 @@
   hosts: all
   become: true
   tasks:
+  - name: Set timezone
+    timezone:
+      name: '{{ timezone }}'
   - name: Kernel Tuning
     with_dict: '{{ sysctl_config }}'
     sysctl:

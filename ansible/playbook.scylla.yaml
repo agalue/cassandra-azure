@@ -1,0 +1,50 @@
+##############################################################################
+# Install and configure Scylla
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Setup Scylla
+  hosts: cassandra_servers
+  become: true
+  tasks:
+  - name: Install and configure Scylla
+    when: cassandra.vendor_repo == 'scylla'
+    block:
+    - name: Install Repository
+      uri:
+        url: 'http://repositories.scylladb.com/scylla/repo/fbda428e-362b-4336-ae92-5942679fe1e4/centos/scylladb-{{ cassandra.repo_version }}.repo'
+        creates: /etc/yum.repos.d/scylla.repo
+        dest: /etc/yum.repos.d/scylla.repo
+    - name: Install Scylla
+      package:
+        state: present
+        name: scylla
+    - name: Configure Scylla
+      shell: 'set -o pipefail && scylla_setup --disks {{ cassandra.disk_devices | join(",") }} --no-version-check'
+      args:
+        creates: /dev/md0
+    - name: Set cluster_name
+      replace:
+        path: /etc/scylla/scylla.yaml
+        regexp: '^(cluster_name:).*'
+        replace: '\1 {{ cassandra.cluster_name }}'
+    - name: Set listen_address
+      replace:
+        path: /etc/scylla/scylla.yaml
+        regexp: '^(listen_address:).*'
+        replace: '\1 {{ cassandra.target_ipv4 }}'
+    - name: Set rpc_address
+      replace:
+        path: /etc/scylla/scylla.yaml
+        regexp: '^(rpc_address:).*'
+        replace: '\1 {{ cassandra.target_ipv4 }}'
+    - name: Set cassandra1 as seed node
+      replace:
+        path: /etc/scylla/scylla.yaml
+        regexp: '^(.*seeds:).*'
+        replace: '\1 "cassandra1"'
+    - name: Copy Newts CQL file
+      template:
+        src: newts.cql.j2
+        dest: /etc/scylla/newts.cql

@@ -1,5 +1,8 @@
 # Author: Alejandro Galue <agalue@opennms.org>
 #
+# The solution was designed to be executed from the OpenNMS server,
+# as the Cassandra VMs won't have public IP addresses.
+#
 # WARNING:
 # - Make sure cassandra_servers.hosts is consistent with the size
 #   of cassandra_ip_addresses in vars.tf.
@@ -10,6 +13,7 @@ all:
     ansible_user: agalue
     ansible_port: 22
     ansible_private_key_file: global-ssh-key
+    timezone: America/New_York
     snmp:
       syscontact: Alejandro Galue <agalue@opennms.org>
       syslocation: Azure
@@ -49,7 +53,8 @@ all:
     cassandra_servers:
       vars:
         cassandra:
-          repo_version: 40x
+          vendor_repo: scylla # Options: scylla, apache
+          repo_version: 4.0 # apache: 311x, 40x; scylla: 3.3, 4.0
           cluster_name: OpenNMS
           replication_factor: 2
           compaction_window_size: 7 # Must be consistent with opennms.newts.ttl

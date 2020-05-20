@@ -11,8 +11,15 @@
   serial: 1
   tasks:
   - name: Start Cassandra Service
+    when: cassandra.vendor_repo == 'apache'
     sysvinit: # Cassandra doesn't offer a systemd service definition
       name: cassandra
+      state: started
+      enabled: yes
+  - name: Start Scylla Server Service
+    when: cassandra.vendor_repo == 'scylla'
+    service:
+      name: scylla-server
       state: started
       enabled: yes
   - name: Wait while node joins the cluster
@@ -26,16 +33,16 @@
 # This runs once, from the first host in the cluster.
 - name: Configure keyspace for Newts
   hosts: cassandra1
-  environment:
+  environment: # Required by Cassandra
     PYTHONPATH: /usr/lib/python2.7/site-packages/
   tasks:
   - name: Check if keyspace exists
-    shell: 'echo "describe keyspaces" | cqlsh {{ cassandra.target_ipv4 }}'
+    shell: 'set -o pipefail && echo "describe keyspaces" | cqlsh {{ cassandra.target_ipv4 }}'
     register: keyspaces
     changed_when: False
   - name: Create keyspace
     when: not "newts" in keyspaces.stdout
-    command: 'cqlsh {{ cassandra.target_ipv4 }} -f /etc/cassandra/conf/newts.cql'
+    command: 'cqlsh {{ cassandra.target_ipv4 }} -f {{ "/etc/scylla" if cassandra.vendor_repo == "scylla" else "/etc/cassandra/conf" }}/newts.cql'
 
 - name: Start OpenNMS
   hosts: onms_servers
