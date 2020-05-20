@@ -141,6 +141,12 @@ resource "azurerm_linux_virtual_machine" "opennms" {
       "ansible-playbook playbook.yaml"
     ]
   }
+
+  timeouts {
+    create = "60m"
+    delete = "30m"
+  }
+
   tags = {
     Environment = "Test"
     Department  = "Support"
