@@ -1,6 +1,6 @@
 # Cassandra in Azure for OpenNMS
 
-This is a Test Environment to evaluate the performance of a Production Ready [Cassandra](http://cassandra.apache.org) Cluster against latest [OpenNMS Horizon](https://www.opennms.com/) in [Azure](https://azure.microsoft.com/).
+This is a Test Environment to evaluate the performance of a Production Ready [Cassandra](http://cassandra.apache.org) or [ScyllaDB](https://www.scylladb.com/) Cluster against latest [OpenNMS Horizon](https://www.opennms.com/) in [Azure](https://azure.microsoft.com/).
 
 The objective is test the performance of a given Cassandra cluster, having a RAID0 made of 2 Premium SSDs (P30 ~ 1TB) per instance for `/var/lib/cassandra`. The number of instances depends on the size of `cassandra_ip_addresses` from [vars.tf](vars.tf).
 
