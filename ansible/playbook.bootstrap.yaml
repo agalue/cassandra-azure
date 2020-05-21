@@ -19,9 +19,12 @@
   - name: Start Scylla Server Service
     when: cassandra.vendor_repo == 'scylla'
     service:
-      name: scylla-server
+      name: '{{ item }}'
       state: started
       enabled: yes
+    loop:
+    - scylla-server
+    - scylla-jmx
   - name: Wait while node joins the cluster
     shell: 'set -o pipefail && nodetool -u cassandra -pw cassandra status 2>/dev/null | grep {{ cassandra.target_ipv4 }}'
     changed_when: False

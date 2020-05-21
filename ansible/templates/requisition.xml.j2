@@ -9,8 +9,10 @@
     </interface>
   {% else %}
     <interface ip-addr="{{ hostvars[host].cassandra.target_ipv4 }}" status="1" snmp-primary="P">
+    {% if hostvars[host].cassandra.vendor_repo == 'apache' %}
       <monitored-service service-name="JMX-Cassandra-Newts"/>
       <monitored-service service-name="JMX-Cassandra"/>
+    {% endif %}
     </interface>
   {% endif %}
   </node>

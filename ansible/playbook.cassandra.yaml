@@ -55,6 +55,10 @@
         name:
         - cassandra
         - cassandra-tools
+    - name: Copy Newts CQL file
+      template:
+        src: newts.cql.j2
+        dest: /etc/cassandra/conf/newts.cql
     - name: Enable Java 11 for Cassandra 4
       when: cassandra.repo_version == '40x'
       alternatives:
@@ -64,18 +68,21 @@
     - name: Set cluster_name
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
-        regexp: '^(cluster_name:).*'
+        regexp: '^[#]?(cluster_name:).*'
         replace: '\1 {{ cassandra.cluster_name }}'
-    - name: Set listen_address
+    - name: Set listeners
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
-        regexp: '^(listen_address:).*'
+        regexp: '^({{ item }}:).*'
         replace: '\1 {{ cassandra.target_ipv4 }}'
-    - name: Set rpc_address
+      loop:
+      - listen_address
+      - rpc_address
+    - name: Set batch_size_fail_threshold_in_kb
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
-        regexp: '^(rpc_address:).*'
-        replace: '\1 {{ cassandra.target_ipv4 }}'
+        regexp: '^(batch_size_fail_threshold_in_kb:).*'
+        replace: '\1 {{ cassandra.batch_size_fail_threshold_in_kb }}'
     - name: Set cassandra1 as seed node
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
@@ -132,7 +139,3 @@
       patch: # https://issues.apache.org/jira/browse/CASSANDRA-15273
         src: cassandra.patch
         dest: /etc/init.d/cassandra
-    - name: Copy Newts CQL file
-      template:
-        src: newts.cql.j2
-        dest: /etc/cassandra/conf/newts.cql

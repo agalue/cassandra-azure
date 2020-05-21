@@ -41,12 +41,20 @@ all:
           repo: stable
           interval: 30000 # For Polling and Data Collection
           newts:
+            # Fetch settings
+            minimum_step: 30000 # Must match opennms.interval
+            heartbeat: 450000
+            # Common settings
             ttl: 31540000
             ring_buffer_size: 4194304
             cache_max_entries: 2000000
-            connections_per_host: 24
-            minimum_step: 30000 # Must be consistent with opennms.interval
-            heartbeat: 450000 # Must be consistent with opennms.interval
+            # Performance settings (crucial when using ScyllaDB)
+            writer_threads: '{{ ansible_processor_cores * 4 }}'
+            core_connections_per_host: 16 # Should be a factor of the number of Cores on a Scylla node.
+            max_connections_per_host: 16 # Should be a factor of the number of Cores on a Scylla node.
+            max_requests_per_connection: 8192
+            compression: NONE # Options: LZ4, SNAPPY, NONE (default: NONE)
+            max_batch_size: 32 # Must be consistent with batch_size_fail_threshold_in_kb (default: 16)
       hosts:
         opennms:
           ansible_host: localhost
@@ -54,9 +62,10 @@ all:
       vars:
         cassandra:
           vendor_repo: scylla # Options: scylla, apache
-          repo_version: 4.0 # apache: 311x, 40x; scylla: 3.3, 4.0
+          repo_version: 4.0 # Apache: 311x, 40x; Scylla: 3.3, 4.0
           cluster_name: OpenNMS
           replication_factor: 2
+          batch_size_fail_threshold_in_kb: 50
           compaction_window_size: 7 # Must be consistent with opennms.newts.ttl
           compaction_window_unit: DAYS
           target_ipv4: '{{ ansible_eth0.ipv4.address }}'

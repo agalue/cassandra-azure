@@ -24,27 +24,66 @@
       shell: 'set -o pipefail && scylla_setup --disks {{ cassandra.disk_devices | join(",") }} --no-version-check'
       args:
         creates: /dev/md0
+    - name: Copy Newts CQL file
+      template:
+        src: newts.cql.j2
+        dest: /etc/scylla/newts.cql
     - name: Set cluster_name
       replace:
         path: /etc/scylla/scylla.yaml
-        regexp: '^(cluster_name:).*'
+        regexp: '^[#]?(cluster_name:).*'
         replace: '\1 {{ cassandra.cluster_name }}'
-    - name: Set listen_address
+    - name: Set listeners
       replace:
         path: /etc/scylla/scylla.yaml
-        regexp: '^(listen_address:).*'
+        regexp: '^({{ item }}:).*'
         replace: '\1 {{ cassandra.target_ipv4 }}'
-    - name: Set rpc_address
+      loop:
+      - listen_address
+      - rpc_address
+      - api_address
+    - name: Set batch_size_fail_threshold_in_kb
       replace:
         path: /etc/scylla/scylla.yaml
-        regexp: '^(rpc_address:).*'
-        replace: '\1 {{ cassandra.target_ipv4 }}'
+        regexp: '^(batch_size_fail_threshold_in_kb:).*'
+        replace: '\1 {{ cassandra.batch_size_fail_threshold_in_kb }}'
     - name: Set cassandra1 as seed node
       replace:
         path: /etc/scylla/scylla.yaml
         regexp: '^(.*seeds:).*'
         replace: '\1 "cassandra1"'
-    - name: Copy Newts CQL file
-      template:
-        src: newts.cql.j2
-        dest: /etc/scylla/newts.cql
+    # The following doesn't seem to be used
+    - name: Set RMI Host
+      replace:
+        path: /etc/scylla/cassandra/cassandra-env.sh
+        regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
+        replace: '\1={{ cassandra.target_ipv4 }}"'
+    - name: Enable jmxremote.access
+      replace:
+        path: /etc/scylla/cassandra/cassandra-env.sh
+        regexp: '^[#](JVM_OPTS=".*jmxremote.access")'
+        replace: '\1'
+    - name: Disable LOCAL_JMX
+      replace:
+        path: /etc/scylla/cassandra/cassandra-env.sh
+        regexp: '^(.*LOCAL_JMX)=yes'
+        replace: '\1=no'
+    - name: Fix JMX remote paths
+      replace:
+        path: /etc/scylla/cassandra/cassandra-env.sh
+        regexp: 'etc\/cassandra'
+        replace: 'etc/scylla'
+    - name: Copy jmxremote.password
+      copy:
+        src: cassandra.jmxremote.password
+        dest: /etc/scylla/jmxremote.password
+        owner: scylla
+        group: scylla
+        mode: '0400'
+    - name: Copy jmxremote.access
+      copy:
+        src: cassandra.jmxremote.access
+        dest: /etc/scylla/jmxremote.access
+        owner: scylla
+        group: scylla
+        mode: '0400'
