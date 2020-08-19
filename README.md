@@ -90,7 +90,7 @@ ssh -i ansible/global-ssh-key agalue@X.X.X.X
 
 > `X.X.X.X` would be the public IP of the OpenNMS server, or the hostname of the target server if you're already inside the OpenNMS server.
 
-The user name `agalue` is defined inside `vars.tf`, in case you want to change it.
+The username `agalue` is defined inside `vars.tf` and `ansible/inventory.yaml`, in case you want to change it.
 
 ## Termination
 
