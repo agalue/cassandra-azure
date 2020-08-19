@@ -34,11 +34,13 @@
         path: /etc/scylla/scylla.yaml
         regexp: '^[#]?(cluster_name:).*'
         replace: '\1 {{ cassandra.cluster_name }}'
+        mode: '0644'
     - name: Set listeners
       replace:
         path: /etc/scylla/scylla.yaml
         regexp: '^({{ item }}:).*'
         replace: '\1 {{ target_ipv4 }}'
+        mode: '0644'
       loop:
       - listen_address
       - rpc_address
@@ -48,32 +50,38 @@
         path: /etc/scylla/scylla.yaml
         regexp: '^(batch_size_fail_threshold_in_kb:).*'
         replace: '\1 {{ cassandra.batch_size_fail_threshold_in_kb }}'
+        mode: '0644'
     - name: Set cassandra1 as seed node
       replace:
         path: /etc/scylla/scylla.yaml
         regexp: '^(.*seeds:).*'
         replace: '\1 "cassandra1"'
+        mode: '0644'
     # The following doesn't seem to be used
     - name: Set RMI Host
       replace:
         path: /etc/scylla/cassandra/cassandra-env.sh
         regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
         replace: '\1={{ target_ipv4 }}"'
+        mode: '0644'
     - name: Enable jmxremote.access
       replace:
         path: /etc/scylla/cassandra/cassandra-env.sh
         regexp: '^[#](JVM_OPTS=".*jmxremote.access")'
         replace: '\1'
+        mode: '0644'
     - name: Disable LOCAL_JMX
       replace:
         path: /etc/scylla/cassandra/cassandra-env.sh
         regexp: '^(.*LOCAL_JMX)=yes'
         replace: '\1=no'
+        mode: '0644'
     - name: Fix JMX remote paths
       replace:
         path: /etc/scylla/cassandra/cassandra-env.sh
         regexp: 'etc\/cassandra'
         replace: 'etc/scylla'
+        mode: '0644'
     - name: Copy jmxremote.password
       copy:
         src: cassandra.jmxremote.password

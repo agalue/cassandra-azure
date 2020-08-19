@@ -23,6 +23,7 @@
       path: /var/lib/pgsql/data/pg_hba.conf
       regexp: '(peer|ident)$'
       replace: 'trust'
+      mode: '0644'
   - name: Start PostgreSQL Service
     service:
       name: postgresql
@@ -45,6 +46,7 @@
     copy:
       src: default-foreign-source.xml
       dest: /opt/opennms/etc/default-foreign-source.xml
+      mode: '0644'
   - name: Copy Timeseries Configuration
     template:
       src: timeseries.properties.j2
@@ -60,6 +62,7 @@
       path: '{{ item }}'
       regexp: 'cassandra-(username|password)'
       replace: 'cassandra' # Must match cassandra.jmxremote.password
+      mode: '0644'
     loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml
@@ -68,6 +71,7 @@
       path: '{{ item }}'
       regexp: 'interval="300000"'
       replace: 'interval="{{ opennms.interval }}"'
+      mode: '0644'
     loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml

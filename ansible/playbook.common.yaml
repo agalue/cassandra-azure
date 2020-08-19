@@ -54,6 +54,7 @@
       backup: yes
       src: snmpd.conf.j2
       dest: /etc/snmp/snmpd.conf
+      mode: '0644'
   - name: Start snmpd Service
     service:
       name: snmpd

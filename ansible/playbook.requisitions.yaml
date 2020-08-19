@@ -8,6 +8,7 @@
   hosts: onms_servers
   become: true
   gather_facts: no
+  ignore_unreachable: true
   vars:
     requisition_name: Inventory
   tasks:

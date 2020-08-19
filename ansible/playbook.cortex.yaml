@@ -6,6 +6,7 @@
 ---
 - name: Setup Cortex
   hosts: cortex_servers
+  ignore_unreachable: true
   become: true
   tasks:
   - name: Install and configure Cortex
@@ -34,3 +35,4 @@
       copy:
         src: cortex.service
         dest: /lib/systemd/system/cortex.service
+        mode: '0644'

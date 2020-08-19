@@ -6,6 +6,7 @@
 ---
 - name: Setup Nginx
   hosts: nginx_servers
+  ignore_unreachable: true
   become: true
   tasks:
   - name: Install and configure Nginx

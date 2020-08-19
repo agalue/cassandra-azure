@@ -52,6 +52,7 @@
 
 - name: Start Cortex load Balancer
   hosts: nginx_servers
+  ignore_unreachable: true
   become: true
   tasks:
   - name: Start Nginx Service
@@ -63,6 +64,7 @@
 
 - name: Start Cortex
   hosts: cortex_servers
+  ignore_unreachable: true
   become: true
   tasks:
   - name: Start Cortex Service

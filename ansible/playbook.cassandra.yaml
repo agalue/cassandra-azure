@@ -72,11 +72,13 @@
         path: /etc/cassandra/conf/cassandra.yaml
         regexp: '^[#]?(cluster_name:).*'
         replace: '\1 {{ cassandra.cluster_name }}'
+        mode: '0644'
     - name: Set listeners
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
         regexp: '^({{ item }}:).*'
         replace: '\1 {{ target_ipv4 }}'
+        mode: '0644'
       loop:
       - listen_address
       - rpc_address
@@ -85,36 +87,43 @@
         path: /etc/cassandra/conf/cassandra.yaml
         regexp: '^(batch_size_fail_threshold_in_kb:).*'
         replace: '\1 {{ cassandra.batch_size_fail_threshold_in_kb }}'
+        mode: '0644'
     - name: Set cassandra1 as seed node
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
         regexp: '^(.*seeds:).*'
         replace: '\1 cassandra1{{ ":7000" if cassandra.repo_version == "40x" else "" }}'
+        mode: '0644'
     - name: Set concurrent_compactors
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
         regexp: '^.*(concurrent_compactors:).*'
         replace: '\1 {{ ansible_processor_cores }}'
+        mode: '0644'
     - name: Set RMI Host
       replace:
         path: /etc/cassandra/conf/cassandra-env.sh
         regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
         replace: '\1={{ target_ipv4 }}"'
+        mode: '0644'
     - name: Enable jmxremote.access
       replace:
         path: /etc/cassandra/conf/cassandra-env.sh
         regexp: '^[#](JVM_OPTS=".*jmxremote.access")'
         replace: '\1'
+        mode: '0644'
     - name: Disable LOCAL_JMX
       replace:
         path: /etc/cassandra/conf/cassandra-env.sh
         regexp: '^(.*LOCAL_JMX)=yes'
         replace: '\1=no'
+        mode: '0644'
     - name: Update Heap Size
       replace:
         path: /etc/cassandra/conf/cassandra-env.sh
         regexp: '^[#]({{ item }})=.*'
         replace: '\1={{ (ansible_memtotal_mb / 2) | int }}M'
+        mode: '0644'
       loop:
       - MAX_HEAP_SIZE
       - HEAP_NEWSIZE
