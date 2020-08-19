@@ -1,0 +1,60 @@
+{# Author: Alejandro Galue <agalue@opennms.org> #}
+
+# Basic Settings
+org.opennms.rrd.storeByGroup=true
+org.opennms.rrd.storeByForeignSource=true
+
+{% if tss_strategy == 'newts' %}
+org.opennms.timeseries.strategy=newts
+
+# Cassandra Access
+org.opennms.newts.config.hostname=cassandra1
+org.opennms.newts.config.keyspace=newts
+
+# Basic tuning based on the expected injection rate
+org.opennms.newts.config.ttl={{ opennms.timeseries.ttl|default('86400000') }}
+org.opennms.newts.config.ring_buffer_size={{ opennms.timeseries.ring_buffer_size }}
+org.opennms.newts.config.cache.max_entries={{ opennms.timeseries.cache_max_entries }}
+org.opennms.newts.config.writer_threads={{ opennms.timeseries.writer_threads|default('16') }}
+org.opennms.newts.config.cache.priming.enable=true
+org.opennms.newts.config.cache.priming.block_ms={{ opennms.timeseries.priming_block_ms|default('-1') }}
+{% if opennms.newts.core_connections_per_host is defined %}
+org.opennms.newts.config.core-connections-per-host={{ opennms.timeseries.core_connections_per_host }}
+{% endif %}
+{% if opennms.newts.max_connections_per_host is defined %}
+org.opennms.newts.config.max-connections-per-host={{ opennms.timeseries.max_connections_per_host }}
+{% endif %}
+{% if opennms.newts.max_requests_per_connection is defined %}
+org.opennms.newts.config.max-requests-per-connection={{ opennms.timeseries.max_requests_per_connection }}
+{% endif %}
+org.opennms.newts.config.max_batch_size={{ opennms.timeseries.max_batch_size|default('16') }}
+org.opennms.newts.config.compression={{ opennms.timeseries.compression|default('NONE') }}
+
+# To control collection interval for visualization purposes
+org.opennms.newts.query.minimum_step={{ opennms.timeseries.minimum_step|default('300000') }}
+org.opennms.newts.query.heartbeat={{ opennms.timeseries.heartbeat|default('450000') }}
+{% endif %}
+
+{% if tss_strategy == 'cortex' %}
+org.opennms.timeseries.strategy=integration
+
+# It is assumed that Cortex will be used as the OIA TSS implementation backed by Cassandra/ScyllaDB
+org.opennms.timeseries.tin.metatags.tag.node=${node:label}
+org.opennms.timeseries.tin.metatags.tag.location=${node:location}
+org.opennms.timeseries.tin.metatags.tag.ifDescr=${interface:if-description}
+org.opennms.timeseries.tin.metatags.tag.label=${resource:label}
+
+# Basic tuning based on the expected injection rate
+org.opennms.timeseries.ring_buffer_size={{ opennms.timeseries.ring_buffer_size }}
+org.opennms.timeseries.config.cache.max_entries={{ opennms.timeseries.cache_max_entries }}
+org.opennms.timeseries.config.writer_threads={{ opennms.timeseries.writer_threads|default('16') }}
+
+# Basic tuning based on the expected injection rate
+# Cassandra/ScyllaDB tuning should be done within Cortex
+org.opennms.timeseries.query.parallelism={{ opennms.timeseries.parallelism|default(ansible_processor_cores) }}
+org.opennms.timeseries.max_batch_size={{ opennms.timeseries.max_batch_size|default('16') }}
+
+# To control collection interval for visualization purposes
+org.opennms.timeseries.query.minimum_step={{ opennms.timeseries.minimum_step|default('300000') }}
+org.opennms.timeseries.query.heartbeat={{ opennms.timeseries.heartbeat|default('450000') }}
+{% endif %}

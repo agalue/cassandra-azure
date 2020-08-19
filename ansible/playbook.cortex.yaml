@@ -1,0 +1,26 @@
+##############################################################################
+# Install and configure Cortex
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Setup Cortex
+  hosts: cortex_servers
+  become: true
+  tasks:
+  - name: Install and configure Cortex
+    when: tss_strategy == 'cortex'
+    block:
+    - name: Install Cortex
+      get_url:
+        url: https://github.com/cortexproject/cortex/releases/download/v1.2.0/cortex-linux-amd64
+        dest: /usr/bin/cortex
+        mode: '0755'
+    - name: Copy Configuration
+      template:
+        src: cortex-config.yaml.j2
+        dest: /etc/cortex/config.yaml
+    - name: Copy Systemd service
+      copy:
+        src: cortex.service
+        dest: /lib/systemd/system/cortex.service

@@ -14,6 +14,7 @@ all:
     ansible_port: 22
     ansible_private_key_file: global-ssh-key
     timezone: America/New_York
+    tss_strategy: newts # Options: newts, cortex
     snmp:
       syscontact: Alejandro Galue <agalue@opennms.org>
       syslocation: Azure
@@ -40,7 +41,7 @@ all:
         opennms:
           repo: stable
           interval: 30000 # For Polling and Data Collection
-          newts:
+          timeseries:
             # Fetch settings
             minimum_step: 30000 # Must match opennms.interval
             heartbeat: 450000
@@ -56,7 +57,7 @@ all:
             compression: NONE # Options: LZ4, SNAPPY, NONE (default: NONE)
             max_batch_size: 32 # Must be consistent with batch_size_fail_threshold_in_kb (default: 16)
       hosts:
-        opennms:
+        opennms: # Ansible will run from here
           ansible_host: localhost
     cassandra_servers:
       vars:
@@ -72,5 +73,11 @@ all:
           disk_devices:
           - /dev/sdc
           - /dev/sdd
-      hosts: # Must cover size of cassandra_ip_addresses from vars.tf (assumes DNS)
-        cassandra[1:3]:
+      hosts: # Must cover size of cassandra_ip_addresses from vars.tf; assumes DNS, check cassandra.tf
+        cassandra[1:3]: {}
+    cortex_servers:
+      hosts: # Must cover size of cortex_ip_addresses from vars.tf; assumes DNS, check cortex.tf
+        cortex[1:3]: {}
+    nginx_servers:
+      hosts: # Assumes DNS, check cortex-nginx.tf
+        cortex: {}

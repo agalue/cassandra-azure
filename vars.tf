@@ -65,6 +65,13 @@ variable "subnet" {
 }
 
 # Must exist within the main subnet range
+variable "nginx_ip_address" {
+  description = "Nginx IP Address; Cortex Load Balancer"
+  type        = string
+  default     = "10.0.2.9"
+}
+
+# Must exist within the main subnet range
 variable "opennms_ip_address" {
   description = "OpenNMS IP Address"
   type        = string
@@ -83,14 +90,44 @@ variable "cassandra_ip_addresses" {
   ]
 }
 
+# Must exist within the main subnet range
+# Must match hosts range for the cortex_servers group in the Ansible inventory
+variable "cortex_ip_addresses" {
+  description = "Cortex IP Addresses. This also determines the size of the cluster."
+  type        = list(string)
+  default = [
+    "10.0.2.111",
+    "10.0.2.112",
+    "10.0.2.113",
+  ]
+}
+
 variable "opennms_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
   default     = "Standard_DS4_v2" # Memory Optimized Instance with 8 Cores, 28GB of RAM
 }
 
+variable "nginx_vm_size" {
+  description = "Nginx Virtual Machine Size"
+  type        = string
+  default     = "Standard_DS2_v2" # General Purpose Instance with 2 Cores, 7GB of RAM
+}
+
+variable "cortex_vm_size" {
+  description = "Cortex Virtual Machine Size"
+  type        = string
+  default     = "Standard_DS12_v2" # Memory Optimized Instance with 4 Cores, 28GB of RAM
+}
+
 variable "cassandra_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
-  default     = "Standard_DS3_v2" # Memory Optimized Instance with 4 Cores, 14 GB of RAM
+  default     = "Standard_DS13_v2" # Memory Optimized Instance with 8 Cores, 56GB of RAM
+}
+
+variable "use_cortex" {
+  description = "Use Cortex via OIA TSS instead of Newts for OpenNMS storage"
+  type        = bool
+  default     = false
 }

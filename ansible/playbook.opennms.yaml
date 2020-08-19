@@ -45,10 +45,10 @@
     copy:
       src: default-foreign-source.xml
       dest: /opt/opennms/etc/default-foreign-source.xml
-  - name: Copy Newts Configuration
+  - name: Copy Timeseries Configuration
     template:
-      src: newts.properties.j2
-      dest: /opt/opennms/etc/opennms.properties.d/newts.properties
+      src: timeseries.properties.j2
+      dest: /opt/opennms/etc/opennms.properties.d/timeseries.properties
   - name: Copy JVM Properties
     template:
       src: opennms.conf.j2
@@ -73,4 +73,18 @@
     command: '/opt/opennms/bin/install -dis'
     args:
       creates: /opt/opennms/etc/configured
-
+  - name: Install and configure Cortex
+    when: tss_strategy == 'cortex'
+    block:
+    - name: Copy OIA TSS Plugin
+      copy:
+        src: opennms-cortex-tss-plugin.kar
+        dest: /opt/opennms/deploy/opennms-cortex-tss-plugin.kar
+    - name: Enable OIA TSS Plugin
+      copy:
+        src: cortex.boot
+        dest: /opt/opennms/etc/featuresBoot.d/cortex.boot
+    - name: Configura OIA TSS Plugin
+      copy:
+        src: org.opennms.plugins.tss.cortex.cfg
+        dest: /opt/opennms/etc/org.opennms.plugins.tss.cortex.cfg

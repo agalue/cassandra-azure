@@ -1,0 +1,6 @@
+[Service]
+ExecStart=/usr/bin/cortex  -config.expand-env -config.file /etc/cortex/config.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

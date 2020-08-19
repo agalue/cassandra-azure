@@ -39,13 +39,38 @@
   environment: # Required by Cassandra
     PYTHONPATH: /usr/lib/python2.7/site-packages/
   tasks:
-  - name: Check if keyspace exists
-    shell: 'set -o pipefail && echo "describe keyspaces" | cqlsh {{ cassandra.target_ipv4 }}'
-    register: keyspaces
-    changed_when: False
-  - name: Create keyspace
-    when: not "newts" in keyspaces.stdout
-    command: 'cqlsh {{ cassandra.target_ipv4 }} -f {{ "/etc/scylla" if cassandra.vendor_repo == "scylla" else "/etc/cassandra/conf" }}/newts.cql'
+  - name: Install and configure Cortex
+    when: tss_strategy != 'cortex'
+    block:
+    - name: Check if keyspace exists
+      shell: 'set -o pipefail && echo "describe keyspaces" | cqlsh {{ cassandra.target_ipv4 }}'
+      register: keyspaces
+      changed_when: False
+    - name: Create keyspace
+      when: not "newts" in keyspaces.stdout
+      command: 'cqlsh {{ cassandra.target_ipv4 }} -f {{ "/etc/scylla" if cassandra.vendor_repo == "scylla" else "/etc/cassandra/conf" }}/newts.cql'
+
+- name: Start Cortex load Balancer
+  hosts: nginx_servers
+  become: true
+  tasks:
+  - name: Start Nginx Service
+    when: tss_strategy == 'cortex'
+    service:
+      name: nginx
+      state: started
+      enabled: yes
+
+- name: Start Cortex
+  hosts: cortex_servers
+  become: true
+  tasks:
+  - name: Start Nginx Service
+    when: tss_strategy == 'cortex'
+    service:
+      name: cortex
+      state: started
+      enabled: yes
 
 - name: Start OpenNMS
   hosts: onms_servers

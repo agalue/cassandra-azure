@@ -22,6 +22,8 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
 
 * Tweak the common settings on [vars.tf](vars.tf) if necessary, and make sure the size of the Cassandra cluster is consistent with the [Ansible Intentory](ansible/inventory/inventory.yaml).
 
+  In order to use [Cortex](https://cortexmetrics.io/) instead of [Newts](http://opennms.github.io/newts/) as the Time Series Storage strategy, make sure to change `tss_strategy` from `newts` to `cortex` inside `inventory.yaml`, and either change `use_cortex` to be `true` inside `vars.tf`, or pass `-var use_cortex=true` to `terraform apply`.
+
 * Execute the following commands from the repository's root directory (at the same level as the `.tf` files):
 
   ```shell
