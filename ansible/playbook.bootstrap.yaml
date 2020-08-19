@@ -65,7 +65,7 @@
   hosts: cortex_servers
   become: true
   tasks:
-  - name: Start Nginx Service
+  - name: Start Cortex Service
     when: tss_strategy == 'cortex'
     service:
       name: cortex

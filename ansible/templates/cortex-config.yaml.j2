@@ -38,6 +38,9 @@ ingester:
         store: memberlist
       replication_factor: {{ groups.cortex_servers|length - 1 }}
 
+querier:
+  max_concurrent: {{ querier_max_concurrent|default(100) }}
+
 schema:
   configs:
   - from: 2020-08-01
@@ -68,6 +71,3 @@ storage:
       }
       AND gc_grace_seconds=604800
       AND read_repair_chance=0
-
-frontend_worker:
-  match_max_concurrent: true

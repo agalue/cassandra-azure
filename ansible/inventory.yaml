@@ -80,6 +80,7 @@ all:
       vars:
         target_ipv4: '{{ ansible_eth0.ipv4.address }}'
         period_in_days: 7
+        querier_max_concurrent: 1000
         cassandra_consistency: ONE
         cassandra_num_connections: 8 # Should be a factor of the number of Cores on a Scylla node.
       hosts: # Must cover size of cortex_ip_addresses from vars.tf; assumes DNS, check cortex.tf
