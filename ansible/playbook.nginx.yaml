@@ -20,6 +20,7 @@
       template:
         src: '{{ item }}.j2'
         dest: /etc/nginx/conf.d/{{ item }}
+        mode: '0600'
       loop:
       - cortex-web.conf
       - cortex-grpc.conf
