@@ -41,6 +41,9 @@ ingester:
 querier:
   max_concurrent: {{ querier_max_concurrent|default(100) }}
 
+frontend_worker:
+  frontend_address: cortex:9095 # point to the load-balancer
+
 schema:
   configs:
   - from: 2020-08-01
