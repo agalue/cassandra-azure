@@ -105,7 +105,9 @@ resource "azurerm_linux_virtual_machine" "opennms" {
   disable_password_authentication = true
 
   depends_on = [
-    azurerm_virtual_machine.cassandra
+    azurerm_virtual_machine.cassandra,
+    azurerm_linux_virtual_machine.nginx,
+    azurerm_linux_virtual_machine.cortex
   ]
 
   network_interface_ids = [

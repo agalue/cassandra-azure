@@ -2,6 +2,8 @@
 #
 # WARNING: Make sure the content is consistent with ansible/inventory/inventory.yaml
 #          (IP Address list of the Cassandra cluster)
+#
+# When using Cortex, this won't work with limited subscription, like MSDN/VisualStudio.
 
 variable "location" {
   description = "Azure Location/Region"
@@ -129,5 +131,5 @@ variable "cassandra_vm_size" {
 variable "use_cortex" {
   description = "Use Cortex via OIA TSS instead of Newts for OpenNMS storage"
   type        = bool
-  default     = false
+  default     = true
 }

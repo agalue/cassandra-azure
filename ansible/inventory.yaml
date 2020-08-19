@@ -14,7 +14,7 @@ all:
     ansible_port: 22
     ansible_private_key_file: global-ssh-key
     timezone: America/New_York
-    tss_strategy: newts # Options: newts, cortex
+    tss_strategy: cortex # Options: newts, cortex
     snmp:
       syscontact: Alejandro Galue <agalue@opennms.org>
       syslocation: Azure

@@ -56,7 +56,7 @@ resource "azurerm_linux_virtual_machine" "cortex" {
   }
 
   os_disk {
-    name                 = "opennms-os-disk"
+    name                 = "cortex-os-disk${count.index + 1}"
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }

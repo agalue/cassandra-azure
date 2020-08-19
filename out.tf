@@ -3,7 +3,3 @@
 output "opennms_public_ip" {
   value = azurerm_public_ip.opennms.ip_address
 }
-
-output "cassandra_ip_addresses" {
-  value = var.cassandra_ip_addresses
-}

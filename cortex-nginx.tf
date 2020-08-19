@@ -103,7 +103,7 @@ resource "azurerm_linux_virtual_machine" "nginx" {
   }
 
   os_disk {
-    name                 = "opennms-os-disk"
+    name                 = "nginx-os-disk"
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
