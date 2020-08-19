@@ -46,20 +46,22 @@ schema:
     schema: v10
     index:
       prefix: index_
-      period: 1w
+      period: {{ period_in_days }}d
     chunks:
       prefix: chunk_
-      period: 1w
+      period: {{ period_in_days }}d
 
 storage:
   cassandra:
     addresses: cassandra1
     port: 9042
     keyspace: cortex
+    consistency: {{ cassandra_consistency|default('QUORUM') }}
+    num_connections: {{ cassandra_num_connections|default(ansible_processor_cores) }}
     replication_factor: {{ groups.cassandra_servers|length - 1 }}
     table_options: |+
       compaction={
-        'compaction_window_size':'7',
+        'compaction_window_size':'{{ period_in_days }}',
         'compaction_window_unit':'DAYS',
         'expired_sstable_check_frequency_seconds':'86400',
         'class':'org.apache.cassandra.db.compaction.TimeWindowCompactionStrategy'

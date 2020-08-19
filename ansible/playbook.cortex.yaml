@@ -11,6 +11,15 @@
   - name: Install and configure Cortex
     when: tss_strategy == 'cortex'
     block:
+    - name: Configure SELinux
+      seport:
+        ports: '{{ item }}'
+        proto: tcp
+        setype: http_port_t
+        state: present
+      loop:
+      - 9009
+      - 9095
     - name: Install Cortex
       get_url:
         url: https://github.com/cortexproject/cortex/releases/download/v1.2.0/cortex-linux-amd64
@@ -20,7 +29,7 @@
       template:
         src: cortex-config.yaml.j2
         dest: /etc/cortex-config.yaml
-        mode: '0600'
+        mode: '0644'
     - name: Copy Systemd service
       copy:
         src: cortex.service

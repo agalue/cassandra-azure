@@ -16,11 +16,20 @@
         state: present
         name:
         - nginx
+    - name: Configure SELinux
+      seport:
+        ports: '{{ item }}'
+        proto: tcp
+        setype: http_port_t
+        state: present
+      loop:
+      - 9009
+      - 9095
     - name: Copy Load Balancer configuration
       template:
         src: '{{ item }}.j2'
         dest: /etc/nginx/conf.d/{{ item }}
-        mode: '0600'
+        mode: '0644'
       loop:
       - cortex-web.conf
       - cortex-grpc.conf
