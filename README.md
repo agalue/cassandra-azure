@@ -31,6 +31,15 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
   terraform apply
   ```
 
+  The above creates a resource group and a vnet. In order to use an existing one, run a modified version of the `apply` command like the follownig example:
+  
+  ```shell
+  terraform apply \
+    -var resource_group_create=false \
+    -var resource_group_name=sales-testing \
+    -var vnet_name=sales-testing-vnet
+  ```
+
   Terraform will install Ansible on the OpenNMS server and run the playbook. When it is done, you're ready to use the Metrics Stress command.
 
 * Connect to the Karaf Shell through SSH:
@@ -69,6 +78,20 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
 
 * Enjoy!
 
+## Access
+
+To make the solution simpler for Ansible, the SSH Key pairs defined on the ansible directory can be used to SSH the OpenNMS server, which is the only one with a public IP, and a similar solution can be used from the OpenNMS server to access the others.
+
+For instance:
+
+```
+ssh -i ansible/global-ssh-key agalue@X.X.X.X
+```
+
+> `X.X.X.X` would be the public IP of the OpenNMS server, or the hostname of the target server if you're already inside the OpenNMS server.
+
+The user name `agalue` is defined inside `vars.tf`, in case you want to change it.
+
 ## Termination
 
 To destroy all the resources:
@@ -76,3 +99,5 @@ To destroy all the resources:
 ```shell
 terraform destroy
 ```
+
+> You might need to pass the same variables applied to `terraform init`.
