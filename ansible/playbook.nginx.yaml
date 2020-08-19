@@ -16,7 +16,12 @@
         state: present
         name:
         - nginx
-    - name: Configure SELinux
+    - name: Set httpd_can_network_connect
+      seboolean:
+        name: httpd_can_network_connect
+        state: yes
+        persistent: yes
+    - name: Configure SELinux Ports
       seport:
         ports: '{{ item }}'
         proto: tcp

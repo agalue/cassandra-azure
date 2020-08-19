@@ -28,6 +28,7 @@
       template:
         src: newts.cql.j2
         dest: /etc/scylla/newts.cql
+        mode: '0644'
     - name: Set cluster_name
       replace:
         path: /etc/scylla/scylla.yaml
@@ -37,7 +38,7 @@
       replace:
         path: /etc/scylla/scylla.yaml
         regexp: '^({{ item }}:).*'
-        replace: '\1 {{ cassandra.target_ipv4 }}'
+        replace: '\1 {{ target_ipv4 }}'
       loop:
       - listen_address
       - rpc_address
@@ -57,7 +58,7 @@
       replace:
         path: /etc/scylla/cassandra/cassandra-env.sh
         regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
-        replace: '\1={{ cassandra.target_ipv4 }}"'
+        replace: '\1={{ target_ipv4 }}"'
     - name: Enable jmxremote.access
       replace:
         path: /etc/scylla/cassandra/cassandra-env.sh

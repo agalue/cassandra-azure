@@ -1,0 +1,43 @@
+##############################################################################
+# Bootstrap process
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Configure Requisitions
+  hosts: onms_servers
+  become: true
+  gather_facts: no
+  vars:
+    requisition_name: Inventory
+  tasks:
+  - name: Gather facts from all servers
+    setup:
+    delegate_to: '{{ item }}'
+    delegate_facts: True
+    loop: '{{ groups.onms_servers + groups.cassandra_servers + groups.nginx_servers + groups.cortex_servers }}'
+  - name: Wait for OpenNMS WebUI to be available
+    wait_for:
+      port: 8980
+  - name: Create Requisition
+    uri:
+      url: http://127.0.0.1:8980/opennms/rest/requisitions
+      force_basic_auth: yes
+      user: admin
+      password: admin
+      method: POST
+      body: '{{ lookup("template", "requisition.xml.j2") }}'
+      headers:
+        Content-Type: application/xml
+      status_code: 202
+      creates: '/opt/opennms/etc/imports/{{ requisition_name }}.xml'
+  - name: Import requisition
+    uri:
+      url: 'http://127.0.0.1:8980/opennms/rest/requisitions/{{ requisition_name }}/import'
+      force_basic_auth: yes
+      user: admin
+      password: admin
+      method: PUT
+      status_code: 202
+      creates: '/opt/opennms/etc/imports/{{ requisition_name }}.xml'
+

@@ -1,20 +1,30 @@
 {# Author: Alejandro Galue <agalue@opennms.org> #}
 <model-import date-stamp="2020-04-24T00:00:00.000-04:00" foreign-source="{{ requisition_name }}">
-{% for host in hostvars %}
-  <node foreign-id="{{ host }}" node-label="{{ host }}">
-  {% if host == 'opennms' %}
-    <interface ip-addr="127.0.0.1" status="1" snmp-primary="P">
+  <node foreign-id="{{ ansible_hostname }}" node-label="{{ ansible_hostname }}">
+    <interface ip-addr="{{ hostvars[ansible_hostname].target_ipv4 }}" status="1" snmp-primary="P"/>
+    <interface ip-addr="127.0.0.1" status="1" snmp-primary="N">
       <monitored-service service-name="OpenNMS-JVM"/>
       <monitored-service service-name="PostgreSQL"/>
     </interface>
-  {% else %}
-    <interface ip-addr="{{ hostvars[host].cassandra.target_ipv4 }}" status="1" snmp-primary="P">
-    {% if hostvars[host].cassandra.vendor_repo == 'apache' %}
+  </node>
+{% for host in groups.nginx_servers %}
+  <node foreign-id="{{ host }}" node-label="{{ host }}">
+    <interface ip-addr="{{ hostvars[host].target_ipv4 }}" status="1" snmp-primary="P"/>
+  </node>
+{% endfor %}
+{% for host in groups.cortex_servers %}
+  <node foreign-id="{{ host }}" node-label="{{ host }}">
+    <interface ip-addr="{{ hostvars[host].target_ipv4 }}" status="1" snmp-primary="P"/>
+  </node>
+{% endfor %}
+{% for host in groups.cassandra_servers %}
+  <node foreign-id="{{ host }}" node-label="{{ host }}">
+    <interface ip-addr="{{ hostvars[host].target_ipv4 }}" status="1" snmp-primary="P">
+{% if hostvars[host].cassandra.vendor_repo == 'apache' %}
       <monitored-service service-name="JMX-Cassandra-Newts"/>
       <monitored-service service-name="JMX-Cassandra"/>
-    {% endif %}
+{% endif %}
     </interface>
-  {% endif %}
   </node>
 {% endfor %}
 </model-import>

@@ -49,6 +49,7 @@
       template:
         src: cassandra.repo.j2
         dest: /etc/yum.repos.d/cassandra.repo
+        mode: '0644'
     - name: Install Cassandra
       package:
         state: present
@@ -59,6 +60,7 @@
       template:
         src: newts.cql.j2
         dest: /etc/cassandra/conf/newts.cql
+        mode: '0644'
     - name: Enable Java 11 for Cassandra 4
       when: cassandra.repo_version == '40x'
       alternatives:
@@ -74,7 +76,7 @@
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
         regexp: '^({{ item }}:).*'
-        replace: '\1 {{ cassandra.target_ipv4 }}'
+        replace: '\1 {{ target_ipv4 }}'
       loop:
       - listen_address
       - rpc_address
@@ -97,7 +99,7 @@
       replace:
         path: /etc/cassandra/conf/cassandra-env.sh
         regexp: '^.*(JVM_OPTS=.*rmi.server.hostname).*'
-        replace: '\1={{ cassandra.target_ipv4 }}"'
+        replace: '\1={{ target_ipv4 }}"'
     - name: Enable jmxremote.access
       replace:
         path: /etc/cassandra/conf/cassandra-env.sh
@@ -120,6 +122,7 @@
       template:
         src: cassandra.jvm.options.j2
         dest: '/etc/cassandra/conf/jvm{{ "11-server" if cassandra.repo_version == "40x" else "" }}.options'
+        mode: '0644'
     - name: Copy jmxremote.password
       copy:
         src: cassandra.jmxremote.password

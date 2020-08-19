@@ -26,7 +26,7 @@
     - scylla-server
     - scylla-jmx
   - name: Wait while node joins the cluster
-    shell: 'set -o pipefail && nodetool -u cassandra -pw cassandra status 2>/dev/null | grep {{ cassandra.target_ipv4 }}'
+    shell: 'set -o pipefail && nodetool -u cassandra -pw cassandra status 2>/dev/null | grep {{ target_ipv4 }}'
     changed_when: False
     register: result
     until: result.stdout is regex("^UN.*")
@@ -43,12 +43,12 @@
     when: tss_strategy != 'cortex'
     block:
     - name: Check if keyspace exists
-      shell: 'set -o pipefail && echo "describe keyspaces" | cqlsh {{ cassandra.target_ipv4 }}'
+      shell: 'set -o pipefail && echo "describe keyspaces" | cqlsh {{ target_ipv4 }}'
       register: keyspaces
       changed_when: False
     - name: Create keyspace
       when: not "newts" in keyspaces.stdout
-      command: 'cqlsh {{ cassandra.target_ipv4 }} -f {{ "/etc/scylla" if cassandra.vendor_repo == "scylla" else "/etc/cassandra/conf" }}/newts.cql'
+      command: 'cqlsh {{ target_ipv4 }} -f {{ "/etc/scylla" if cassandra.vendor_repo == "scylla" else "/etc/cassandra/conf" }}/newts.cql'
 
 - name: Start Cortex load Balancer
   hosts: nginx_servers
@@ -83,28 +83,3 @@
       name: opennms
       state: started
       enabled: yes
-  - name: Wait for OpenNMS WebUI to be available
-    wait_for:
-      port: 8980
-  - name: Create Requisition
-    uri:
-      url: http://127.0.0.1:8980/opennms/rest/requisitions
-      force_basic_auth: yes
-      user: admin
-      password: admin
-      method: POST
-      body: '{{ lookup("template", "requisition.xml.j2") }}'
-      headers:
-        Content-Type: application/xml
-      status_code: 202
-      creates: '/opt/opennms/etc/imports/{{ requisition_name }}.xml'
-  - name: Import requisition
-    uri:
-      url: 'http://127.0.0.1:8980/opennms/rest/requisitions/{{ requisition_name }}/import'
-      force_basic_auth: yes
-      user: admin
-      password: admin
-      method: PUT
-      status_code: 202
-      creates: '/opt/opennms/etc/imports/{{ requisition_name }}.xml'
-

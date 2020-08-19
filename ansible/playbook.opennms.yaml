@@ -49,10 +49,12 @@
     template:
       src: timeseries.properties.j2
       dest: /opt/opennms/etc/opennms.properties.d/timeseries.properties
+      mode: '0644'
   - name: Copy JVM Properties
     template:
       src: opennms.conf.j2
       dest: /opt/opennms/etc/opennms.conf
+      mode: '0644'
   - name: Update Cassandra credentials for Pollerd and Collectd
     replace:
       path: '{{ item }}'
@@ -80,11 +82,14 @@
       copy:
         src: opennms-cortex-tss-plugin.kar
         dest: /opt/opennms/deploy/opennms-cortex-tss-plugin.kar
+        mode: '0644'
     - name: Enable OIA TSS Plugin
       copy:
         src: cortex.boot
         dest: /opt/opennms/etc/featuresBoot.d/cortex.boot
+        mode: '0644'
     - name: Configura OIA TSS Plugin
       copy:
         src: org.opennms.plugins.tss.cortex.cfg
         dest: /opt/opennms/etc/org.opennms.plugins.tss.cortex.cfg
+        mode: '0644'
