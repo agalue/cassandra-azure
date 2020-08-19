@@ -11,7 +11,7 @@ resource "azurerm_resource_group" "main" {
   location = var.location
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
   }
 }
@@ -24,7 +24,7 @@ resource "azurerm_virtual_network" "main" {
   address_space       = [var.address_space]
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
   }
 }

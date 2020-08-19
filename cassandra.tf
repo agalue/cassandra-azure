@@ -54,7 +54,7 @@ resource "azurerm_network_security_group" "cassandra" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
   }
 }
@@ -76,7 +76,7 @@ resource "azurerm_network_interface" "cassandra" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
   }
 }
@@ -143,7 +143,7 @@ resource "azurerm_virtual_machine" "cassandra" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
     Application = "Cassandra"
   }

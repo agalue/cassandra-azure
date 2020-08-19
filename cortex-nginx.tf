@@ -42,7 +42,7 @@ resource "azurerm_network_security_group" "cortex" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
   }
 }
@@ -64,7 +64,7 @@ resource "azurerm_network_interface" "nginx" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
   }
 }
@@ -114,7 +114,7 @@ resource "azurerm_linux_virtual_machine" "nginx" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
     Application = "Nginx"
   }

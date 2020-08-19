@@ -54,7 +54,7 @@ resource "azurerm_network_security_group" "opennms" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
   }
 }
@@ -84,7 +84,7 @@ resource "azurerm_network_interface" "opennms" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
   }
 }
@@ -162,7 +162,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
   }
 
   tags = {
-    Environment = "Test"
+    Environment = "Testing"
     Department  = "Support"
     Application = "OpenNMS"
   }
