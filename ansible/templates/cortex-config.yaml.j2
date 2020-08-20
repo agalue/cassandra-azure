@@ -7,6 +7,11 @@ server:
   grpc_server_max_send_msg_size: 104857600
   grpc_server_max_concurrent_streams: 1000
 
+limits:
+  max_series_per_query: {{ limits.max_series_per_query|default(100000) }}
+  max_samples_per_query: {{ limits.max_samples_per_query|default(1000000) }}
+  max_series_per_user: {{ limits.max_series_per_user|default(5000000) }}
+
 memberlist:
 {% if inventory_hostname != "cortex1" %}
   join_members:
@@ -39,7 +44,7 @@ ingester:
       replication_factor: {{ groups.cortex_servers|length - 1 }}
 
 querier:
-  max_concurrent: {{ querier_max_concurrent|default(100) }}
+  max_concurrent: {{ querier.max_concurrent|default(100) }}
 
 frontend_worker:
   frontend_address: cortex:9095 # point to the load-balancer

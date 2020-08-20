@@ -1,0 +1,16 @@
+##############################################################################
+# Bootstrap process
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Restart Cortex
+  hosts: cortex_servers
+  ignore_unreachable: true
+  become: true
+  tasks:
+  - name: Start Cortex Service
+    service:
+      name: cortex
+      state: restarted
+      enabled: yes
