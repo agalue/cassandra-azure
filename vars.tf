@@ -83,7 +83,7 @@ variable "opennms_ip_address" {
 # Must exist within the main subnet range
 # Must match hosts range for the cassandra_servers group in the Ansible inventory
 variable "cassandra_ip_addresses" {
-  description = "Cassandra IP Addresses. This also determines the size of the cluster."
+  description = "Cassandra/ScyllaDB IP Addresses. This also determines the size of the cluster."
   type        = list(string)
   default = [
     "10.0.2.11",
@@ -123,7 +123,7 @@ variable "cortex_vm_size" {
 }
 
 variable "cassandra_vm_size" {
-  description = "OpenNMS Virtual Machine Size"
+  description = "Cassandra/ScyllaDB Virtual Machine Size"
   type        = string
   default     = "Standard_DS13_v2" # Memory Optimized Instance with 8 Cores, 56GB of RAM
 }
