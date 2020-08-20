@@ -130,6 +130,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
     name                 = "opennms-os-disk"
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
+    disk_size_gb         = 100
   }
 
   connection {
@@ -152,7 +153,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
       "sudo pip3 -qqq install ansible",
       "cd ~/ansible",
       "chmod 400 global-ssh-key",
-      "ansible-playbook playbook.yaml -e tss_strategy=${var.use_cortex ? 'cortex' : 'newts'}"
+      "ansible-playbook playbook.yaml -e tss_strategy=${var.use_cortex ? "cortex" : "newts"}"
     ]
   }
 
