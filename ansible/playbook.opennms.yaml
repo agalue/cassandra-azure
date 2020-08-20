@@ -24,6 +24,13 @@
       regexp: '(peer|ident)$'
       replace: 'trust'
       mode: '0644'
+  - name: Apply tuning
+    with_dict: '{{ postgresql.settings }}'
+    replace:
+      path: '/var/lib/pgsql/data/postgresql.conf'
+      regexp: '^[#]?{{ item.key }} = [^\s]+'
+      replace: '{{ item.key }} = {{ item.value }}'
+      mode: '0600'
   - name: Start PostgreSQL Service
     service:
       name: postgresql
@@ -46,6 +53,11 @@
     copy:
       src: default-foreign-source.xml
       dest: /opt/opennms/etc/default-foreign-source.xml
+      mode: '0644'
+  - name: Copy Database Configuration
+    template:
+      src: opennms-datasources.xml.j2
+      dest: /opt/opennms/etc/opennms-datasources.xml
       mode: '0644'
   - name: Copy Timeseries Configuration
     template:

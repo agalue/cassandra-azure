@@ -57,6 +57,24 @@ all:
             max_requests_per_connection: 8192
             compression: NONE # Options: LZ4, SNAPPY, NONE (default: NONE)
             max_batch_size: 32 # Must be consistent with batch_size_fail_threshold_in_kb (default: 16)
+        postgresql:
+          db_pool_size: 200 # for OpenNMS
+          settings: # PGTune for 4 Cores, 8GB of RAM and 250 connections
+            max_connections: 250
+            shared_buffers: 2GB
+            effective_cache_size: 6GB
+            maintenance_work_mem: 512MB
+            checkpoint_completion_target: 0.9
+            wal_buffers: 16MB
+            default_statistics_target: 100
+            random_page_cost: 1.1
+            effective_io_concurrency: 200
+            work_mem: 2097kB
+            min_wal_size: 1GB
+            max_wal_size: 4GB
+            max_worker_processes: 4
+            max_parallel_workers_per_gather: 2
+            max_parallel_workers: 4
       hosts:
         opennms: # Ansible will run from here
           ansible_host: localhost

@@ -1,0 +1,28 @@
+{# Author: Alejandro Galue <agalue@opennms.org> #}
+<?xml version="1.0" encoding="UTF-8"?>
+<datasource-configuration xmlns:this="http://xmlns.opennms.org/xsd/config/opennms-datasources"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.opennms.org/xsd/config/opennms-datasources
+  http://www.opennms.org/xsd/config/opennms-datasources.xsd">
+
+  <connection-pool factory="org.opennms.core.db.HikariCPConnectionFactory"
+    idleTimeout="600"
+    loginTimeout="3"
+    minPool="{{ postgresql.db_pool_size }}"
+    maxPool="{{ postgresql.db_pool_size }}"
+    maxSize="{{ postgresql.db_pool_size }}" />
+
+  <jdbc-data-source name="opennms"
+                    database-name="opennms"
+                    class-name="org.postgresql.Driver"
+                    url="jdbc:postgresql://{{ postgresql.server|default('localhost') }}:5432/opennms"
+                    user-name="opennms"
+                    password="opennms" />
+
+  <jdbc-data-source name="opennms-admin"
+                    database-name="template1"
+                    class-name="org.postgresql.Driver"
+                    url="jdbc:postgresql://{{ postgresql.server|default('localhost') }}:5432/template1"
+                    user-name="postgres"
+                    password="" />
+</datasource-configuration>
