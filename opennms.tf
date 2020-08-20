@@ -152,7 +152,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
       "sudo pip3 -qqq install ansible",
       "cd ~/ansible",
       "chmod 400 global-ssh-key",
-      "ansible-playbook playbook.yaml"
+      "ansible-playbook playbook.yaml -e tss_strategy=${var.use_cortex ? 'cortex' : 'newts'}"
     ]
   }
 

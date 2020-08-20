@@ -131,5 +131,5 @@ variable "cassandra_vm_size" {
 variable "use_cortex" {
   description = "Use Cortex via OIA TSS instead of Newts for OpenNMS storage"
   type        = bool
-  default     = true
+  default     = false
 }

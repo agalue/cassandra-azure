@@ -20,9 +20,11 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
 
 > *NOTE*: The templates requires Terraform version 0.12.x.
 
-* Tweak the common settings on [vars.tf](vars.tf) if necessary, and make sure the size of the Cassandra cluster is consistent with the [Ansible Intentory](ansible/inventory/inventory.yaml).
+* Tweak the common settings on [vars.tf](vars.tf) if necessary, and make sure the size of the Cassandra cluster and the size of the Cortex cluster is consistent with the [Ansible Intentory](ansible/inventory/inventory.yaml).
 
-  In order to use [Cortex](https://cortexmetrics.io/) instead of [Newts](http://opennms.github.io/newts/) as the Time Series Storage strategy, make sure to change `tss_strategy` from `newts` to `cortex` inside `inventory.yaml`, and either change `use_cortex` to be `true` inside `vars.tf`, or pass `-var use_cortex=true` to `terraform apply`.
+  ScyllaDB is the default. To use Cassandra, please update the inventory variables.
+
+  To use [Cortex](https://cortexmetrics.io/) instead of [Newts](http://opennms.github.io/newts/) (the default) as the Time Series Storage strategy, make sure to pass `-var use_cortex=true` to `terraform apply`.
 
 * Execute the following commands from the repository's root directory (at the same level as the `.tf` files):
 
@@ -37,7 +39,8 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
   terraform apply \
     -var resource_group_create=false \
     -var resource_group_name=sales-testing \
-    -var vnet_name=sales-testing-vnet
+    -var vnet_name=sales-testing-vnet \
+    -var use_cortex=true
   ```
 
   Terraform will install Ansible on the OpenNMS server and run the playbook. When it is done, you're ready to use the Metrics Stress command.
@@ -100,4 +103,12 @@ To destroy all the resources:
 terraform destroy
 ```
 
-> You might need to pass the same variables applied to `terraform init`.
+If you passed variables to `terraform init`, make sure to apply them to `terraform destroy` as well, for example:
+
+```shell
+terraform destroy \
+  -var resource_group_create=false \
+  -var resource_group_name=sales-testing \
+  -var vnet_name=sales-testing-vnet \
+  -var use_cortex=true
+```
