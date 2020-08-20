@@ -13,7 +13,7 @@
     block:
     - name: Install Repository
       uri:
-        url: 'http://repositories.scylladb.com/scylla/repo/fbda428e-362b-4336-ae92-5942679fe1e4/centos/scylladb-{{ cassandra.repo_version }}.repo'
+        url: http://repositories.scylladb.com/scylla/repo/9a7f5765-08b0-4072-97ce-7ac832f43f1b/centos/scylladb-4.1.repo
         creates: /etc/yum.repos.d/scylla.repo
         dest: /etc/yum.repos.d/scylla.repo
     - name: Install Scylla
