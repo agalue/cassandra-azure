@@ -1,0 +1,7 @@
+datacenter = "dc1"
+data_dir = "/opt/consul"
+client_addr = "0.0.0.0"
+retry_join = ["cortex1"]
+bootstrap_expect = {{ groups.cortex_servers|length }}
+server = true
+ui = false

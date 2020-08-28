@@ -1,7 +1,7 @@
 # Author: Alejandro Galue <agalue@opennms.org>
 #
 # WARNING: Make sure the content is consistent with ansible/inventory/inventory.yaml
-#          (IP Address list of the Cassandra cluster)
+#          (IP Address list of the Cassandra cluster and Cortex Cluster)
 #
 # When using Cortex, this won't work with limited subscription, like MSDN/VisualStudio.
 
@@ -67,8 +67,8 @@ variable "subnet" {
 }
 
 # Must exist within the main subnet range
-variable "nginx_ip_address" {
-  description = "Nginx IP Address; Cortex Load Balancer"
+variable "envoy_ip_address" {
+  description = "Envoy IP Address; Cortex Load Balancer"
   type        = string
   default     = "10.0.2.9"
 }
@@ -94,6 +94,7 @@ variable "cassandra_ip_addresses" {
 
 # Must exist within the main subnet range
 # Must match hosts range for the cortex_servers group in the Ansible inventory
+# Should not be more than 3 as Consul will be running on the same instances
 variable "cortex_ip_addresses" {
   description = "Cortex IP Addresses. This also determines the size of the cluster."
   type        = list(string)
@@ -110,8 +111,8 @@ variable "opennms_vm_size" {
   default     = "Standard_DS4_v2" # Memory Optimized Instance with 8 Cores, 28GB of RAM
 }
 
-variable "nginx_vm_size" {
-  description = "Nginx Virtual Machine Size"
+variable "envoy_vm_size" {
+  description = "Envoy Virtual Machine Size"
   type        = string
   default     = "Standard_DS2_v2" # General Purpose Instance with 2 Cores, 7GB of RAM
 }
@@ -119,7 +120,7 @@ variable "nginx_vm_size" {
 variable "cortex_vm_size" {
   description = "Cortex Virtual Machine Size"
   type        = string
-  default     = "Standard_DS12_v2" # Memory Optimized Instance with 4 Cores, 28GB of RAM
+  default     = "Standard_DS13_v2" # Memory Optimized Instance with 8 Cores, 56GB of RAM
 }
 
 variable "cassandra_vm_size" {

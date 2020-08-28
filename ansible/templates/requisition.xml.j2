@@ -7,7 +7,7 @@
       <monitored-service service-name="PostgreSQL"/>
     </interface>
   </node>
-{% for host in groups.nginx_servers %}
+{% for host in groups.envoy_servers %}
   <node foreign-id="{{ host }}" node-label="{{ host }}">
     <interface ip-addr="{{ hostvars[host].target_ipv4 }}" status="1" snmp-primary="P"/>
   </node>

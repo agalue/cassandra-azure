@@ -3,8 +3,8 @@ auth_enabled: false
 server:
   http_listen_port: 9009
   grpc_listen_port: 9095
-  grpc_server_max_recv_msg_size: 104857600
-  grpc_server_max_send_msg_size: 104857600
+  grpc_server_max_recv_msg_size: {{ limits.max_recv_msg_size|default(104857600) }}
+  grpc_server_max_send_msg_size: {{ limits.max_send_msg_size|default(104857600) }}
   grpc_server_max_concurrent_streams: 1000
 
 limits:
@@ -12,26 +12,19 @@ limits:
   max_samples_per_query: {{ limits.max_samples_per_query|default(1000000) }}
   max_series_per_user: {{ limits.max_series_per_user|default(5000000) }}
 
-memberlist:
-{% if inventory_hostname != "cortex1" %}
-  join_members:
-  - cortex1
-{% endif %}
-  abort_if_cluster_join_fails: false
-
 distributor:
   shard_by_all_labels: true
   pool:
     health_check_ingesters: true
   ring:
     kvstore:
-      store: memberlist
+      store: {{ "consul" if groups.cortex_servers|length > 1 else "inmemory" }}
 
 ingester_client:
   grpc_client_config:
-    max_recv_msg_size: 104857600
-    max_send_msg_size: 104857600
-    use_gzip_compression: true
+    max_recv_msg_size: {{ limits.max_recv_msg_size|default(104857600) }}
+    max_send_msg_size: {{ limits.max_send_msg_size|default(104857600) }}
+    grpc_compression: gzip
 
 ingester:
   lifecycler:
@@ -40,7 +33,7 @@ ingester:
     num_tokens: 512
     ring:
       kvstore:
-        store: memberlist
+        store: {{ "consul" if groups.cortex_servers|length > 1 else "inmemory" }}
       replication_factor: {{ groups.cortex_servers|length - 1 }}
 
 querier:
@@ -67,7 +60,7 @@ storage:
     addresses: cassandra1
     port: 9042
     keyspace: cortex
-    consistency: {{ cassandra_consistency|default('QUORUM') }}
+    consistency: {{ cassandra_consistency|default('ONE') }}
     num_connections: {{ cassandra_num_connections|default(ansible_processor_cores) }}
     replication_factor: {{ groups.cassandra_servers|length - 1 }}
     table_options: |+

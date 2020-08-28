@@ -9,8 +9,11 @@
   ignore_unreachable: true
   become: true
   tasks:
-  - name: Start Cortex Service
+  - name: Restart Consul and Cortex
     service:
-      name: cortex
+      name: '{{ item }}'
       state: restarted
       enabled: yes
+    loop:
+    - consul
+    - cortex

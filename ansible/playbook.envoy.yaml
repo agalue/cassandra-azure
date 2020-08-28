@@ -1,0 +1,48 @@
+##############################################################################
+# Install and configure Envoy (a load balancer for Cortex)
+# Author: Alejandro Galue <agalue@opennms.org>
+##############################################################################
+
+---
+- name: Setup Envoy
+  hosts: envoy_servers
+  ignore_unreachable: true
+  become: true
+  tasks:
+  - name: Install and configure Envoy
+    when: tss_strategy == 'cortex'
+    block:
+    - name: Install Envoy Repository
+      get_url:
+        url: 'https://www.getenvoy.io/linux/centos/tetrate-getenvoy.repo'
+        dest: /etc/yum.repos.d/envoy.repo
+        mode: '0644'
+    - name: Install Envoy
+      package:
+        state: present
+        name:
+        - getenvoy-envoy
+    - name: Set httpd_can_network_connect
+      seboolean:
+        name: httpd_can_network_connect
+        state: yes
+        persistent: yes
+    - name: Configure SELinux Ports
+      seport:
+        ports: '{{ item }}'
+        proto: tcp
+        setype: http_port_t
+        state: present
+      loop:
+      - 9009
+      - 9095
+    - name: Copy Load Balancer configuration
+      template:
+        src: 'envoy.yaml.j2'
+        dest: /etc/envoy.yaml
+        mode: '0644'
+    - name: Copy Systemd service
+      copy:
+        src: envoy.service
+        dest: /lib/systemd/system/envoy.service
+        mode: '0644'

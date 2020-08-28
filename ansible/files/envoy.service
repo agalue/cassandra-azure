@@ -1,0 +1,6 @@
+[Service]
+ExecStart=/usr/bin/envoy -c /etc/envoy.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

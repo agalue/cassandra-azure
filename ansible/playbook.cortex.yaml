@@ -1,5 +1,5 @@
 ##############################################################################
-# Install and configure Cortex
+# Install and configure Cortex and Consul
 # Author: Alejandro Galue <agalue@opennms.org>
 ##############################################################################
 
@@ -8,6 +8,8 @@
   hosts: cortex_servers
   ignore_unreachable: true
   become: true
+  vars:
+    cortex_version: v1.3.0
   tasks:
   - name: Install and configure Cortex
     when: tss_strategy == 'cortex'
@@ -23,10 +25,10 @@
       - 9095
     - name: Install Cortex
       get_url:
-        url: https://github.com/cortexproject/cortex/releases/download/v1.2.0/cortex-linux-amd64
+        url: 'https://github.com/cortexproject/cortex/releases/download/{{ cortex_version }}/cortex-linux-amd64'
         dest: /usr/bin/cortex
         mode: '0755'
-    - name: Copy Configuration
+    - name: Copy Cortex Configuration
       template:
         src: cortex-config.yaml.j2
         dest: /etc/cortex-config.yaml
@@ -36,3 +38,21 @@
         src: cortex.service
         dest: /lib/systemd/system/cortex.service
         mode: '0644'
+    - name: Install and configure Consul
+      when: groups.cortex_servers|length > 1
+      block:
+      - name: Install Hashicorp Repository
+        get_url:
+          url: 'https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo'
+          dest: /etc/yum.repos.d/hashicorp.repo
+          mode: '0644'
+      - name: Install Consul
+        package:
+          state: present
+          name:
+          - consul
+      - name: Copy Consul Configuration
+        template:
+          src: consul.hcl.j2
+          dest: /etc/consul.d/consul.hcl
+          mode: '0644'

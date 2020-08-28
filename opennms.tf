@@ -106,7 +106,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
 
   depends_on = [
     azurerm_virtual_machine.cassandra,
-    azurerm_linux_virtual_machine.nginx,
+    azurerm_linux_virtual_machine.envoy,
     azurerm_linux_virtual_machine.cortex
   ]
 

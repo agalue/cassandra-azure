@@ -39,6 +39,8 @@ all:
     onms_servers:
       vars:
         target_ipv4: '{{ ansible_eth0.ipv4.address }}'
+        grafana:
+          version: 7.1.5
         opennms:
           repo: stable
           interval: 30000 # For Polling and Data Collection
@@ -99,6 +101,8 @@ all:
         target_ipv4: '{{ ansible_eth0.ipv4.address }}'
         period_in_days: 7
         limits:
+          max_recv_msg_size: 1048576000
+          max_send_msg_size: 1048576000
           max_series_per_query: 100000000
           max_samples_per_query: 1000000
           max_series_per_user: 5000000
@@ -108,8 +112,8 @@ all:
         cassandra_num_connections: 8 # Should be a factor of the number of Cores on a Scylla node.
       hosts: # Must cover size of cortex_ip_addresses from vars.tf; assumes DNS, check cortex.tf
         cortex[1:3]: {}
-    nginx_servers:
+    envoy_servers:
       vars:
         target_ipv4: '{{ ansible_eth0.ipv4.address }}'
-      hosts: # Assumes DNS, check cortex-nginx.tf
+      hosts: # Assumes DNS, check envoy.tf
         cortex: {}

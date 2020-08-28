@@ -1,5 +1,52 @@
 # Author: Alejandro Galue <agalue@opennms.org>
 
+resource "azurerm_network_security_group" "cortex" {
+  name                = "cortex-sg"
+  location            = var.location
+  resource_group_name = local.resource_group
+
+  security_rule {
+    name                       = "ssh"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "http"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "9009"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "grpc"
+    priority                   = 102
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "9095"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = {
+    Environment = "Testing"
+    Department  = "Support"
+  }
+}
+
 resource "azurerm_network_interface" "cortex" {
   count               = var.use_cortex ? length(var.cortex_ip_addresses) : 0
   name                = "cortex${count.index + 1}-nic"

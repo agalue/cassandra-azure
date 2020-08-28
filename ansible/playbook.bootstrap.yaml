@@ -51,14 +51,14 @@
       command: 'cqlsh {{ target_ipv4 }} -f {{ "/etc/scylla" if cassandra.vendor_repo == "scylla" else "/etc/cassandra/conf" }}/newts.cql'
 
 - name: Start Cortex load Balancer
-  hosts: nginx_servers
+  hosts: envoy_servers
   ignore_unreachable: true
   become: true
   tasks:
-  - name: Start Nginx Service
+  - name: Start Envoy Service
     when: tss_strategy == 'cortex'
     service:
-      name: nginx
+      name: envoy
       state: started
       enabled: yes
 
@@ -70,9 +70,12 @@
   - name: Start Cortex Service
     when: tss_strategy == 'cortex'
     service:
-      name: cortex
+      name: '{{ item }}'
       state: started
       enabled: yes
+    loop:
+    - consul
+    - cortex
 
 - name: Start OpenNMS
   hosts: onms_servers
@@ -80,8 +83,11 @@
   vars:
     requisition_name: Inventory
   tasks:
-  - name: Start OpenNMS Service
+  - name: Start Services
     service:
-      name: opennms
+      name: '{{ item }}'
       state: started
       enabled: yes
+    loop:
+    - opennms
+    - grafana-server

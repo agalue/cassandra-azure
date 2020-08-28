@@ -105,7 +105,13 @@
         dest: /opt/opennms/etc/featuresBoot.d/cortex.boot
         mode: '0644'
     - name: Configura OIA TSS Plugin
-      copy:
+      vars:
+        cortex_srv: '{{ "cortex1" if groups.cortex_servers|length == 1 else "cortex" }}'
+      template:
         src: org.opennms.plugins.tss.cortex.cfg
         dest: /opt/opennms/etc/org.opennms.plugins.tss.cortex.cfg
         mode: '0644'
+  - name: Install Grafana
+    yum:
+      state: present
+      name: 'https://dl.grafana.com/oss/release/grafana-{{ grafana.version }}-1.x86_64.rpm'
