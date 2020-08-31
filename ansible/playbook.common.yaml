@@ -7,6 +7,7 @@
 - name: Common Configuration
   hosts: all
   become: true
+  ignore_unreachable: true
   tasks:
   - name: Set timezone
     timezone:
