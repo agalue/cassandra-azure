@@ -70,12 +70,15 @@
   - name: Start Cortex Service
     when: tss_strategy == 'cortex'
     service:
-      name: '{{ item }}'
+      name: cortex
       state: started
       enabled: yes
-    loop:
-    - consul
-    - cortex
+  - name: Start Consul Service
+    when: tss_strategy == 'cortex' and groups.cortex_servers|length > 1
+    service:
+      name: consul
+      state: started
+      enabled: yes
 
 - name: Start OpenNMS
   hosts: onms_servers

@@ -67,6 +67,7 @@ variable "subnet" {
 }
 
 # Must exist within the main subnet range
+# Used only when the number of Cortex instances is greater than 1
 variable "envoy_ip_address" {
   description = "Envoy IP Address; Cortex Load Balancer"
   type        = string
@@ -100,8 +101,8 @@ variable "cortex_ip_addresses" {
   type        = list(string)
   default = [
     "10.0.2.111",
-    "10.0.2.112",
-    "10.0.2.113",
+#   "10.0.2.112",
+#   "10.0.2.113",
   ]
 }
 
@@ -111,6 +112,7 @@ variable "opennms_vm_size" {
   default     = "Standard_DS4_v2" # Memory Optimized Instance with 8 Cores, 28GB of RAM
 }
 
+# Used only when the number of Cortex instances is greater than 1
 variable "envoy_vm_size" {
   description = "Envoy Virtual Machine Size"
   type        = string

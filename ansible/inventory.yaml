@@ -106,12 +106,14 @@ all:
           max_series_per_query: 100000000
           max_samples_per_query: 1000000
           max_series_per_user: 5000000
+          max_series_per_metric: 500000
         querier:
           max_concurrent: 1000
         cassandra_consistency: ONE
         cassandra_num_connections: 8 # Should be a factor of the number of Cores on a Scylla node.
       hosts: # Must cover size of cortex_ip_addresses from vars.tf; assumes DNS, check cortex.tf
-        cortex[1:3]: {}
+#       cortex[1:3]: {}
+        cortex1: {}
     envoy_servers:
       vars:
         target_ipv4: '{{ ansible_eth0.ipv4.address }}'

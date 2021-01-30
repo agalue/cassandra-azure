@@ -1,3 +1,4 @@
+{% set total_servers = groups.cortex_servers|length %}
 auth_enabled: false
 
 server:
@@ -11,6 +12,7 @@ limits:
   max_series_per_query: {{ limits.max_series_per_query|default(100000) }}
   max_samples_per_query: {{ limits.max_samples_per_query|default(1000000) }}
   max_series_per_user: {{ limits.max_series_per_user|default(5000000) }}
+  max_series_per_metric: {{ limits.max_series_per_metric|default(50000) }}
 
 distributor:
   shard_by_all_labels: true
@@ -18,7 +20,7 @@ distributor:
     health_check_ingesters: true
   ring:
     kvstore:
-      store: {{ "consul" if groups.cortex_servers|length > 1 else "inmemory" }}
+      store: {{ "consul" if total_servers > 1 else "inmemory" }}
 
 ingester_client:
   grpc_client_config:
@@ -33,8 +35,8 @@ ingester:
     num_tokens: 512
     ring:
       kvstore:
-        store: {{ "consul" if groups.cortex_servers|length > 1 else "inmemory" }}
-      replication_factor: {{ groups.cortex_servers|length - 1 }}
+        store: {{ "consul" if total_servers > 1 else "inmemory" }}
+      replication_factor: {{ total_servers - 1 if total_servers > 1 else 1 }}
 
 querier:
   max_concurrent: {{ querier.max_concurrent|default(100) }}
