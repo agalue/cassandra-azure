@@ -10,3 +10,9 @@ TODO
 
 # .tfvars files
 *.tfvars
+
+# lock files
+.terraform.lock.hcl
+
+# temporary files
+experiments
