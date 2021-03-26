@@ -61,8 +61,8 @@ all:
     cassandra_servers:
       vars:
         cassandra:
-          vendor_repo: scylla # Options: scylla, apache
-          repo_version: 4.1 # Apache: 311x, 40x; Scylla: 3.3, 4.0, 4.1
+          vendor_repo: apache # Options: scylla, apache
+          repo_version: 311x # Apache: 311x, 40x; Scylla: 4.4
           cluster_name: OpenNMS
           replication_factor: 2
           batch_size_fail_threshold_in_kb: 50
