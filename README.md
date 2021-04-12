@@ -16,11 +16,9 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
    az login
    ```
 
-* Install the Terraform binary from [terraform.io](https://www.terraform.io)
+* Install the Terraform binary from [terraform.io](https://www.terraform.io) (Version 0.12.x or newer required).
 
-> *NOTE*: The templates requires Terraform version 0.12.x.
-
-* Tweak the common settings on [vars.tf](vars.tf) if necessary, and make sure the size of the Cassandra cluster is consistent with the [Ansible Intentory](ansible/inventory/inventory.yaml).
+* Tweak the common settings on [vars.tf](vars.tf) if necessary, and make sure the size of the Cassandra cluster is consistent with the [Ansible Intentory](ansible/inventory.yaml).
 
 * Execute the following commands from the repository's root directory (at the same level as the `.tf` files):
 
