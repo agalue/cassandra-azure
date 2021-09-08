@@ -27,7 +27,6 @@ resource "azurerm_network_interface" "cassandra" {
   tags                = local.required_tags
 
   enable_accelerated_networking = true
-  internal_dns_name_label       = "${var.username}-cassandra${count.index + 1}"
 
   ip_configuration {
     name                          = "cassandra${count.index + 1}"

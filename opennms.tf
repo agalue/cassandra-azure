@@ -40,7 +40,7 @@ resource "azurerm_public_ip" "opennms" {
   location            = var.location
   resource_group_name = local.resource_group
   tags                = local.required_tags
-  allocation_method   = "Static"
+  allocation_method   = "Dynamic"
   sku                 = "Standard"
 }
 
@@ -51,7 +51,6 @@ resource "azurerm_network_interface" "opennms" {
   tags                = local.required_tags
 
   enable_accelerated_networking = true
-  internal_dns_name_label       = "opennms"
 
   ip_configuration {
     name                          = "opennms"
@@ -69,14 +68,11 @@ resource "azurerm_network_interface_security_group_association" "opennms" {
 
 resource "azurerm_linux_virtual_machine" "opennms" {
   name                = local.onms_vm_mame
-  computer_name       = local.onms_vm_mame
   resource_group_name = local.resource_group
   tags                = local.required_tags
   location            = var.location
   size                = var.opennms_vm_size
   admin_username      = var.username
-
-  disable_password_authentication = true
 
   depends_on = [
     azurerm_virtual_machine.cassandra
@@ -104,6 +100,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
     storage_account_type = "Standard_LRS"
   }
 
+  # For the provisioners
   connection {
     type        = "ssh"
     user        = var.username
