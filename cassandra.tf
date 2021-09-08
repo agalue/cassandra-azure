@@ -1,83 +1,39 @@
 # Author: Alejandro Galue <agalue@opennms.org>
 
 resource "azurerm_network_security_group" "cassandra" {
-  name                = "cassandra-sg"
+  name                = "${var.username}-cassandra-sg"
   location            = var.location
   resource_group_name = local.resource_group
+  tags                = local.required_tags
 
   security_rule {
-    name                       = "intra-node"
+    name                       = "ssh"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "7000-7001"
+    destination_port_range     = "22"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "cql-native"
-    priority                   = 101
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "9042"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "thrift"
-    priority                   = 102
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "9160"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "jmx"
-    priority                   = 103
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "7199"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
   }
 }
 
 resource "azurerm_network_interface" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
-  name                = "cassandra${count.index + 1}-nic"
+  name                = "${var.username}-cassandra${count.index + 1}-nic"
   location            = var.location
   resource_group_name = local.resource_group
+  tags                = local.required_tags
 
   enable_accelerated_networking = true
-  internal_dns_name_label       = "cassandra${count.index + 1}"
+  internal_dns_name_label       = "${var.username}-cassandra${count.index + 1}"
 
   ip_configuration {
     name                          = "cassandra${count.index + 1}"
     subnet_id                     = azurerm_subnet.cassandra.id
     private_ip_address_allocation = "Static"
     private_ip_address            = var.cassandra_ip_addresses[count.index]
-  }
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
   }
 }
 
@@ -90,8 +46,9 @@ resource "azurerm_network_interface_security_group_association" "cassandra" {
 # To facilitate data disks management, avoid using azurerm_linux_virtual_machine
 resource "azurerm_virtual_machine" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
-  name                = "cassandra${count.index + 1}"
+  name                = "${var.username}-cassandra${count.index + 1}"
   resource_group_name = local.resource_group
+  tags                = local.required_tags
   location            = var.location
   vm_size             = var.cassandra_vm_size
 
@@ -110,7 +67,7 @@ resource "azurerm_virtual_machine" "cassandra" {
   }
 
   os_profile {
-    computer_name  = "cassandra${count.index + 1}"
+    computer_name  = "${var.username}-cassandra${count.index + 1}"
     admin_username = var.username
   }
 
@@ -123,7 +80,7 @@ resource "azurerm_virtual_machine" "cassandra" {
   }
 
   storage_os_disk {
-    name              = "cassandra${count.index + 1}-os-disk"
+    name              = "${var.username}-cassandra${count.index + 1}-os-disk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
@@ -133,18 +90,12 @@ resource "azurerm_virtual_machine" "cassandra" {
     iterator = disk
     for_each = range(2)
     content {
-      name                      = "cassandra${count.index + 1}-data-disk${disk.key}"
+      name                      = "${var.username}-cassandra${count.index + 1}-data-disk${disk.key}"
       create_option             = "Empty"
       managed_disk_type         = "Premium_LRS"
       disk_size_gb              = 1023
       write_accelerator_enabled = false
       lun                       = disk.key
     }
-  }
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-    Application = "Cassandra"
   }
 }

@@ -12,23 +12,17 @@ variable "location" {
 variable "resource_group_create" {
   description = "Set to true to create the resource group and the vnet"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "resource_group_name" {
   description = "Name of the resource group"
   type        = string
-  default     = "cassandra-rg"
-}
-
-variable "vnet_name" {
-  description = "Name of the Virtual Network within the chosen resource group"
-  type        = string
-  default     = "cassandra-vnet"
+  default     = "support-testing"
 }
 
 variable "username" {
-  description = "Administrative user to manage VMs"
+  description = "Administrative user to manage VMs / Azure resource owner for tagging purposes"
   type        = string
   default     = "agalue"
 }
@@ -45,7 +39,7 @@ variable "os_image" {
   default = {
     publisher = "OpenLogic"
     offer     = "CentOS"
-    sku       = "8_3"
+    sku       = "8_4"
     version   = "latest"
   }
 }

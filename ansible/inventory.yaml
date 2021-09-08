@@ -4,8 +4,9 @@
 # as the Cassandra VMs won't have public IP addresses.
 #
 # WARNING:
-# - Make sure cassandra_servers.hosts is consistent with the size
-#   of cassandra_ip_addresses in vars.tf.
+# - Make sure the name prefix for the hosts matches the username in vars.tf.
+# - Make sure cassandra_servers.hosts is consistent with the size of
+#   cassandra_ip_addresses in vars.tf.
 # - The solution uses DNS, to avoid having the IP addresses here.
 ---
 all:
@@ -56,7 +57,7 @@ all:
             compression: NONE # Options: LZ4, SNAPPY, NONE (default: NONE)
             max_batch_size: 32 # Must be consistent with batch_size_fail_threshold_in_kb (default: 16)
       hosts:
-        opennms:
+        agalue-onmscas01:
           ansible_host: localhost
     cassandra_servers:
       vars:
@@ -73,4 +74,4 @@ all:
           - /dev/sdc
           - /dev/sdd
       hosts: # Must cover size of cassandra_ip_addresses from vars.tf (assumes DNS)
-        cassandra[1:3]:
+        agalue-cassandra[1:3]:

@@ -1,9 +1,14 @@
 # Author: Alejandro Galue <agalue@opennms.org>
 
+locals {
+  onms_vm_mame = "${var.username}-onmscas01"
+}
+
 resource "azurerm_network_security_group" "opennms" {
-  name                = "opennms-sg"
+  name                = "${local.onms_vm_mame}-sg"
   location            = var.location
   resource_group_name = local.resource_group
+  tags                = local.required_tags
 
   security_rule {
     name                       = "ssh"
@@ -28,37 +33,22 @@ resource "azurerm_network_security_group" "opennms" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-
-  security_rule {
-    name                       = "karaf"
-    priority                   = 102
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "8181"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-  }
 }
 
 resource "azurerm_public_ip" "opennms" {
-  name                = "opennms-ip"
+  name                = "${local.onms_vm_mame}-ip"
   location            = var.location
   resource_group_name = local.resource_group
+  tags                = local.required_tags
   allocation_method   = "Static"
   sku                 = "Standard"
 }
 
 resource "azurerm_network_interface" "opennms" {
-  name                = "opennms-nic"
+  name                = "${local.onms_vm_mame}-nic"
   location            = var.location
   resource_group_name = local.resource_group
+  tags                = local.required_tags
 
   enable_accelerated_networking = true
   internal_dns_name_label       = "opennms"
@@ -70,11 +60,6 @@ resource "azurerm_network_interface" "opennms" {
     private_ip_address            = var.opennms_ip_address
     public_ip_address_id          = azurerm_public_ip.opennms.id
   }
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-  }
 }
 
 resource "azurerm_network_interface_security_group_association" "opennms" {
@@ -83,9 +68,10 @@ resource "azurerm_network_interface_security_group_association" "opennms" {
 }
 
 resource "azurerm_linux_virtual_machine" "opennms" {
-  name                = "opennms"
-  computer_name       = "opennms"
+  name                = local.onms_vm_mame
+  computer_name       = local.onms_vm_mame
   resource_group_name = local.resource_group
+  tags                = local.required_tags
   location            = var.location
   size                = var.opennms_vm_size
   admin_username      = var.username
@@ -113,7 +99,7 @@ resource "azurerm_linux_virtual_machine" "opennms" {
   }
 
   os_disk {
-    name                 = "opennms-os-disk"
+    name                 = "${local.onms_vm_mame}-os-disk"
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
@@ -145,11 +131,5 @@ resource "azurerm_linux_virtual_machine" "opennms" {
   timeouts {
     create = "60m"
     delete = "30m"
-  }
-
-  tags = {
-    Environment = "Test"
-    Department  = "Support"
-    Application = "OpenNMS"
   }
 }
