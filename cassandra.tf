@@ -42,7 +42,8 @@ resource "azurerm_network_interface_security_group_association" "cassandra" {
   network_security_group_id = azurerm_network_security_group.cassandra.id
 }
 
-# To facilitate data disks management, avoid using azurerm_linux_virtual_machine
+# To facilitate data disks management at creation time, avoid azurerm_linux_virtual_machine
+# See https://github.com/hashicorp/terraform-provider-azurerm/issues/6117
 resource "azurerm_virtual_machine" "cassandra" {
   count               = length(var.cassandra_ip_addresses)
   name                = "${var.username}-cassandra${count.index + 1}"

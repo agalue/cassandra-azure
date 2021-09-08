@@ -40,6 +40,7 @@ resource "azurerm_public_ip" "opennms" {
   location            = var.location
   resource_group_name = local.resource_group
   tags                = local.required_tags
+  domain_name_label   = local.onms_vm_mame
   allocation_method   = "Dynamic"
   sku                 = "Standard"
 }
