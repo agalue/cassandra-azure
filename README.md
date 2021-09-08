@@ -16,9 +16,15 @@ The solution uses [Terraform](https://www.terraform.io) to build the infrastruct
    az login
    ```
 
-* Install the Terraform binary from [terraform.io](https://www.terraform.io) (Version 0.12.x or newer required).
+* Install the Terraform binary from [terraform.io](https://www.terraform.io) (Version 0.13.x or newer required).
 
 * Tweak the common settings on [vars.tf](vars.tf) if necessary, and make sure the size of the Cassandra cluster is consistent with the [Ansible Intentory](ansible/inventory.yaml).
+
+* Create the SSH Key Pair to access the OpenNMS VM via public IP, and to be able to execute Ansible from the OpenNMS server without passwords, by executing the following (please do not use passphrase):
+
+```bash
+ssh-keygen -C cassandra-playground -f ./ansible/global-ssh-key
+```
 
 * Execute the following commands from the repository's root directory (at the same level as the `.tf` files):
 
