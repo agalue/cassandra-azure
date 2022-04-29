@@ -70,6 +70,7 @@ all:
           compaction_window_size: 7 # Must be consistent with opennms.newts.ttl
           compaction_window_unit: DAYS
           target_ipv4: '{{ ansible_eth0.ipv4.address }}'
+          seed: 'agalue-cassandra1' # Must match hostname of first instance
           disk_devices:
           - /dev/disk/azure/scsi1/lun0
           - /dev/disk/azure/scsi1/lun1

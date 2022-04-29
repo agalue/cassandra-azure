@@ -87,7 +87,7 @@
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
         regexp: '^(.*seeds:).*'
-        replace: '\1 cassandra1{{ ":7000" if cassandra.repo_version == "40x" else "" }}'
+        replace: '\1 {{ cassandra.seed }}{{ ":7000" if cassandra.repo_version == "40x" else "" }}'
     - name: Set concurrent_compactors
       replace:
         path: /etc/cassandra/conf/cassandra.yaml
