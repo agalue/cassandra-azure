@@ -35,7 +35,7 @@
 
 # This runs once, from the first host in the cluster.
 - name: Configure keyspace for Newts
-  hosts: cassandra1
+  hosts: agalue-cassandra1
   environment: # Required by Cassandra
     PYTHONPATH: /usr/lib/python2.7/site-packages/
   tasks:
