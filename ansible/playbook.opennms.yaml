@@ -14,6 +14,7 @@
       name:
       - java-11-openjdk-devel
       - postgresql-server
+      - tmux
   - name: Initialize Database
     command: 'postgresql-setup initdb'
     args:
