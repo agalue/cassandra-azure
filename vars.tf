@@ -80,11 +80,11 @@ variable "cassandra_ip_addresses" {
 variable "opennms_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
-  default     = "Standard_DS4_v2" # General Purpose instance with 8 Cores, 28GB of RAM
+  default     = "Standard_D8s_v5" # General Purpose instance with 8 Cores, 32GB of RAM
 }
 
 variable "cassandra_vm_size" {
   description = "OpenNMS Virtual Machine Size"
   type        = string
-  default     = "Standard_DS3_v2" # General Purpose instance with 4 Cores, 14 GB of RAM
+  default     = "Standard_D8s_v5" # General Purpose instance with 8 Cores, 32 GB of RAM
 }
