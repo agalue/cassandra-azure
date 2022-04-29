@@ -5,5 +5,5 @@ syscontact {{ snmp.syscontact }}
 dontLogTCPWrappersConnects yes
 disk /
 {% if 'cassandra' in ansible_host %}
-disk /var/lib/{{ "cassandra" if vendor_repo == 'apache' else "scylla" }}
+disk /var/lib/{{ "cassandra" if cassandra.vendor_repo == 'apache' else "scylla" }}
 {% endif %}

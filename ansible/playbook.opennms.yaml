@@ -70,6 +70,8 @@
     loop:
       - /opt/opennms/etc/collectd-configuration.xml
       - /opt/opennms/etc/poller-configuration.xml
+  - name: Fix Permissions
+    command: '/opt/opennms/bin/fix-permissions'
   - name: Initialize OpenNMS Schema
     command: '/opt/opennms/bin/install -dis'
     args:

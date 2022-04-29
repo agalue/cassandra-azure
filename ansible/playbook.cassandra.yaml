@@ -30,7 +30,7 @@
         state: present
       loop: '{{ cassandra.disk_devices }}'
     - name: Create RAID0 device at {{ raid_device }}
-      shell: 'set -o pipefail && mdadm --create {{ raid_device }} --level=stripe --name=cassandra --raid-devices=2 {{ cassandra.disk_devices | join("1 ") }}1'
+      shell: 'set -o pipefail && mdadm --create {{ raid_device }} --level=stripe --name=cassandra --raid-devices=2 {{ cassandra.disk_devices | join("-part1 ") }}-part1'
       args:
         creates: '{{ raid_device }}'
     - name: Create a xfs filesystem on {{ raid_device }}

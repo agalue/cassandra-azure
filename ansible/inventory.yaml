@@ -62,8 +62,8 @@ all:
     cassandra_servers:
       vars:
         cassandra:
-          vendor_repo: scylla # Options: scylla, apache
-          repo_version: 4.6 # Apache: 311x, 40x; Scylla: 4.6
+          vendor_repo: apache # Options: scylla, apache
+          repo_version: 40x # Apache: 311x, 40x; Scylla: 4.6
           cluster_name: OpenNMS
           replication_factor: 2
           batch_size_fail_threshold_in_kb: 50
@@ -71,7 +71,7 @@ all:
           compaction_window_unit: DAYS
           target_ipv4: '{{ ansible_eth0.ipv4.address }}'
           disk_devices:
-          - /dev/sdc
-          - /dev/sdd
+          - /dev/disk/azure/scsi1/lun0
+          - /dev/disk/azure/scsi1/lun1
       hosts: # Must cover size of cassandra_ip_addresses from vars.tf (assumes DNS)
         agalue-cassandra[1:3]:
