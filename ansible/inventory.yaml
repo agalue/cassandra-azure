@@ -42,6 +42,7 @@ all:
           repo: stable
           interval: 30000 # For Polling and Data Collection
           newts:
+            hostname: 'agalue-cassandra1' # Must match hostname of first instance
             # Fetch settings
             minimum_step: 30000 # Must match opennms.interval
             heartbeat: 450000
