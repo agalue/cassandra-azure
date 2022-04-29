@@ -35,7 +35,7 @@ ssh-keygen -C cassandra-playground -f ./ansible/global-ssh-key
 
   Terraform will install Ansible on the OpenNMS server and run the playbook. When it is done, you're ready to use the Metrics Stress command.
 
-* Connect to the Karaf Shell through SSH:
+* Connect to the Karaf Shell through SSH via `tmux`:
 
   From the OpenNMS instance:
 
@@ -50,19 +50,25 @@ ssh-keygen -C cassandra-playground -f ./ansible/global-ssh-key
   For 20K:
 
   ```shell
-  opennms:stress-metrics -r 60 -n 6000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
+  opennms:stress-metrics -r 60 -n 6000 -f 20 -g 5 -a 10 -s 1 -t 8 -i 300
   ```
 
   For 40K:
 
   ```shell
-  opennms:stress-metrics -r 60 -n 12000 -f 20 -g 5 -a 10 -s 1 -t 200 -i 300
+  opennms:stress-metrics -r 60 -n 12000 -f 20 -g 5 -a 10 -s 1 -t 8 -i 300
+  ```
+
+  For 50K:
+
+  ```shell
+  opennms:stress-metrics -r 60 -n 15000 -f 20 -g 5 -a 10 -s 1 -t 8 -i 300
   ```
 
   For 100K:
 
   ```shell
-  opennms:stress-metrics -r 60 -n 15000 -f 20 -g 5 -a 20 -s 1 -t 200 -i 300
+  opennms:stress-metrics -r 60 -n 15000 -f 20 -g 5 -a 20 -s 1 -t 8 -i 300
   ```
 
   Using `Standard_DS4_v2` for OpenNMS and `Standard_DS3_v2` on a 3 nodes cluster using Cassandra 3.11.6 with OpenJDK 8, the solution was able to handle 20K samples per second, but not 40K. Interestingly, with Cassandra 4.0-alpha4 and OpenJDK 11, the solution was able to handle 40K samples per second without issues, meaning Cassandra 4 looks very promising in terms of performance improvements. Although, with ScyllaDB 4 I got even better performance compared with Cassandra 4 for the same load.
