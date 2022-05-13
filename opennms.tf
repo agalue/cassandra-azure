@@ -103,10 +103,12 @@ resource "azurerm_linux_virtual_machine" "opennms" {
 
   # For the provisioners
   connection {
-    type        = "ssh"
+    host        = self.public_ip_address
     user        = var.username
-    host        = azurerm_public_ip.opennms.ip_address
+    type        = "ssh"
     private_key = file("./ansible/global-ssh-key")
+    timeout     = "4m"
+    agent       = false
   }
 
   # Copy Ansible Playbook files

@@ -18,7 +18,7 @@ variable "resource_group_create" {
 variable "resource_group_name" {
   description = "Name of the resource group"
   type        = string
-  default     = "support-testing"
+  default     = "agalue-poc"
 }
 
 variable "username" {
@@ -48,21 +48,21 @@ variable "os_image" {
 variable "address_space" {
   description = "Virtual Network Address Space"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "172.17.2.0/24"
 }
 
 # Must exist within the address_space of the chosen virtual network
 variable "subnet" {
   description = "Main Subnet Range"
   type        = string
-  default     = "10.0.2.0/24"
+  default     = "172.17.2.0/24"
 }
 
 # Must exist within the main subnet range
 variable "opennms_ip_address" {
   description = "OpenNMS IP Address"
   type        = string
-  default     = "10.0.2.10"
+  default     = "172.17.2.10"
 }
 
 # Must exist within the main subnet range
@@ -71,9 +71,9 @@ variable "cassandra_ip_addresses" {
   description = "Cassandra IP Addresses. This also determines the size of the cluster."
   type        = list(string)
   default = [
-    "10.0.2.11",
-    "10.0.2.12",
-    "10.0.2.13",
+    "172.17.2.11",
+    "172.17.2.12",
+    "172.17.2.13",
   ]
 }
 
